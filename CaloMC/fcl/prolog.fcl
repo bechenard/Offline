@@ -6,7 +6,7 @@
 
 BEGIN_PROLOG
   HitMakerBlindTime      : 500. 
-  HitMakerDigiSampling   : 5    
+  HitMakerDigiSampling   : 1   
   HitMakerMinPeakADC     : 16
 END_PROLOG
 
@@ -23,7 +23,7 @@ CaloShowerStepMaker  :
     usePhysVolInfo          : false
     #physVolInfoInput       : "compressPVDetector"
     physVolInfoInput        : "g4run"
-    caloMaterial            : ["G4_CESIUM_IODIDE", "Polyethylene092","CarbonFiber"]
+    caloMaterial            : ["G4_BARIUM_FLUORIDE", "Polyethylene092","CarbonFiber"]
     compressData            : true
     eDepThreshold           : 0 
     diagLevel               : 0

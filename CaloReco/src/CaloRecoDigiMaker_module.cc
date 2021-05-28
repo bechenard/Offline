@@ -153,6 +153,18 @@ namespace mu2e {
               double chi2      = waveformProcessor_->chi2();
               int    ndf       = waveformProcessor_->ndf();
               
+
+static int nplot(0);
+if (nplot < maxPlots_ && waveformProcessor_->nPeaks()>1){
+std::stringstream ss;
+ss<<"wf_"<<nplot<<".pdf";
+waveformProcessor_->plot(ss.str());
+++nplot;
+}
+
+
+
+
               if (chi2/float(ndf) > maxChi2Cut_) continue;
            
               if (SiPMID%2==0) totEnergyReco += eDep;

@@ -134,6 +134,8 @@ namespace mu2e {
             
             double xmaxEstimate = estimatePeakTime(xvec,ywork,i);
 	    double ymaxEstimate = fmutil_.peakNorm(xvec, ywork, xmaxEstimate , i-windowPeak_, i+windowPeak_);
+
+            if (ymaxEstimate>1e5) continue;
 	    	    
 	    parInit.push_back(ymaxEstimate); 
             parInit.push_back(xmaxEstimate);
