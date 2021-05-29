@@ -155,15 +155,14 @@ namespace mu2e {
               
 
 static int nplot(0);
-if (nplot < maxPlots_ && waveformProcessor_->nPeaks()>1){
+if (nplot < maxPlots_ && eDep > 50){
 std::stringstream ss;
 ss<<"wf_"<<nplot<<".pdf";
 waveformProcessor_->plot(ss.str());
 ++nplot;
 }
 
-
-
+              if (diagLevel_ > 2) std::cout<<"Reco hit  id="<<SiPMID<<" eDep= "<<eDep<<"  time="<<time<<"   chi2="<<chi2/float(ndf)<<std::endl;
 
               if (chi2/float(ndf) > maxChi2Cut_) continue;
            

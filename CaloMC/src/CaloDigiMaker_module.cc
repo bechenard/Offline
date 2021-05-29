@@ -165,6 +165,7 @@ namespace mu2e {
       
       int nWaveforms   = calorimeter_->nCrystal()*calorimeter_->caloInfo().getInt("nSiPMPerCrystal");
       int waveformSize = (mbtime_ - blindTime_ + endTimeBuffer_) / digiSampling_; 
+      int pedestal     = (addNoise_) ? noiseGenerator_.pedestal() : 0;
       
       for (int iRO=0;iRO<nWaveforms;++iRO)
       {
@@ -172,7 +173,7 @@ namespace mu2e {
           fillROHits(iRO, waveform, CaloShowerROs, calorimeterCalibrations);
           if (addNoise_ &&  generateSpotNoise_) generateNoise(waveform, iRO, calorimeterCalibrations);
           if (addNoise_ && !generateSpotNoise_) noiseGenerator_.addFullNoise(waveform, false);
-          buildOutputDigi(iRO, waveform, noiseGenerator_.pedestal(), caloDigiColl);
+          buildOutputDigi(iRO, waveform, pedestal, caloDigiColl);
       }
   }
 

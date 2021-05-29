@@ -31,7 +31,7 @@ namespace mu2e {
         while (icurrent < starts.size())
         {
             if (stops[iprev] > starts[icurrent]) {stops[iprev]=stops[icurrent]; starts[icurrent]=stops[icurrent]=wf.size()+10;}
-            else                                       {iprev = icurrent;}
+            else                                 {iprev = icurrent;}
             ++icurrent;
         }
 
