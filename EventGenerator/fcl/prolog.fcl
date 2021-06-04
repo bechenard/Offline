@@ -133,6 +133,14 @@ CaloTBGun : {
     module_type    : CaloTBGun
 }
 
+LHEGun: {
+    module_type    : LHEGun
+      LHEfilename  : "unweighted_events.lhe"
+      genID        : CeEndpoint
+      muonStops    : @local::mu2e.tgtMuonStops
+      doHistograms : false
+}
+
 # Save state of random numbers at the start of each event
 # the module is defined in art/Framework/Modules
 
@@ -344,6 +352,9 @@ EventGenerator : { @table::EventGenerator
 
         CaloTBGun : {
 	    module_type    : CaloTBGun
+	}
+        LHEGun : {
+	    module_type    : LHEGun
 	}
     }
 }
