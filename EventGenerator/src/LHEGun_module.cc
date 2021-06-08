@@ -130,15 +130,13 @@ namespace mu2e {
 
          int pdgId = particle.idup();
          CLHEP::Hep3Vector p3(particle.pup(0)*GeVToMeV,particle.pup(1)*GeVToMeV,particle.pup(2)*GeVToMeV);
-
-         double energy(particle.pup(4));
-         if (std::abs(pdgId) == 11) energy = sqrt(p3.mag2()+elmass2_);  //Madgraph sets m_e = m_mu = 0
-         if (std::abs(pdgId) == 13) energy = sqrt(p3.mag2()+mumass2_);
+         double energy(particle.pup(3)*GeVToMeV);
          CLHEP::HepLorentzVector fourmom(p3,energy);
-         if (diagLevel_>1) std::cout<<"LHEGun::fill adding paarticle p=("<<p3.x()<<","<<p3.y()<<","<<p3.z()
+         if (diagLevel_>1) std::cout<<"LHEGun::fill adding particle p=("<<p3.x()<<","<<p3.y()<<","<<p3.z()
                                     <<") E="<<energy<<std::endl;
 
 	 output.emplace_back(PDGCode::type(pdgId),genId_,pos,fourmom,stop.t);
+break;
 
 	 if (doHistograms_)
 	 {

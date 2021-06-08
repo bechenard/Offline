@@ -29,14 +29,13 @@ CommonMC: {
     EWMProducer : { module_type : EventWindowMarkerProducer }
   }
   TimeMaps : [ protonTimeMap, muonTimeMap, cosmicTimeMap ]
+
   FindMCPrimary : {
     module_type : FindMCPrimary
-    debugLevel : 0
+    debugLevel : 2
     GenParticles : "compressDigiMCs"
     SimParticles : "compressDigiMCs"
-    PrimaryGenIds : ["CeEndpoint", "CeLeadingLog", "dioTail",
-        "cosmicDYB", "CosmicCRY", "CosmicCORSIKA",
-        "InternalRPC" , "InternalRMC", "ExternalRPC", "ExternalRMC"  ]
+    PrimaryGenIds : ["CeEndpoint", "CeLeadingLog", "dioTail","cosmicDYB", "CosmicCRY", "CosmicCORSIKA","InternalRPC" , "InternalRMC", "ExternalRPC", "ExternalRMC"  ]
   }
   SelectRecoMC : {
     module_type : SelectRecoMC

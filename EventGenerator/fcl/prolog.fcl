@@ -136,9 +136,10 @@ CaloTBGun : {
 LHEGun: {
     module_type    : LHEGun
       LHEfilename  : "unweighted_events.lhe"
-      genID        : CeEndpoint
+      genID        : LHETool
       muonStops    : @local::mu2e.tgtMuonStops
       doHistograms : false
+      diagLevel : 2
 }
 
 # Save state of random numbers at the start of each event

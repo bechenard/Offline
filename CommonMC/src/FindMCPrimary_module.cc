@@ -95,7 +95,7 @@ namespace mu2e {
     }
     // handle CRY and CORSIKA separately: it simulates secondaries and we have to create the primary ourselves.
     // This should be done in the generator FIXME!
-    if(pgps.size() >0 && (pgps.front()->generatorId() == GenId::cosmicCRY || pgps.front()->generatorId() == GenId::cosmicCORSIKA )){
+    if (pgps.size() >0 && (pgps.front()->generatorId() == GenId::cosmicCRY || pgps.front()->generatorId() == GenId::cosmicCORSIKA )){
       HepLorentzVector pmom;
       Hep3Vector ppos;
       double ptime(FLT_MAX);
@@ -107,7 +107,19 @@ namespace mu2e {
       pmom.setVectM(pmom,_proton_mass);
       ppos /= pgps.size();
       pgp = GenParticle(PDGCode::proton,pgps[0]->generatorId(), ppos,pmom, ptime,0.0);
-    } else if (pgps.size() == 1 ) {
+    } else if(pgps.size() >0 && (pgps.front()->generatorId() == GenId::LHETool || pgps.front()->generatorId() == GenId::LHETool )){
+      HepLorentzVector pmom;
+      Hep3Vector ppos;
+      double ptime(FLT_MAX);
+      for(auto const& gp: pgps){
+	pmom   += gp->momentum();
+	ppos   += gp->position();
+	ptime = std::min(ptime,gp->time());
+      }
+      ppos /= pgps.size();
+      pgp = GenParticle(PDGCode::string,pgps[0]->generatorId(), ppos,pmom, ptime,0.0);
+    }
+    else if (pgps.size() == 1 ) {
       // exactly 1 primary: we're done
       pgp = *pgps.front();
       if(_debug > 1) std::cout << "Found single particle primary " << pgp << std::endl;
