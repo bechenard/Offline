@@ -108,6 +108,7 @@ namespace mu2e {
       ppos /= pgps.size();
       pgp = GenParticle(PDGCode::proton,pgps[0]->generatorId(), ppos,pmom, ptime,0.0);
     } else if(pgps.size() >0 && (pgps.front()->generatorId() == GenId::LHETool || pgps.front()->generatorId() == GenId::LHETool )){
+      static double const mu_mass = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::mu_minus).ref().mass().value();
       HepLorentzVector pmom;
       Hep3Vector ppos;
       double ptime(FLT_MAX);
@@ -117,7 +118,8 @@ namespace mu2e {
 	ptime = std::min(ptime,gp->time());
       }
       ppos /= pgps.size();
-      pgp = GenParticle(PDGCode::string,pgps[0]->generatorId(), ppos,pmom, ptime,0.0);
+      pmom.setVectM(pmom, mu_mass  );
+      pgp = GenParticle(PDGCode::mu_minus,pgps[0]->generatorId(), ppos,pmom, ptime,0.0);
     }
     else if (pgps.size() == 1 ) {
       // exactly 1 primary: we're done
