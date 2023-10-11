@@ -5,7 +5,7 @@
 #include "fhiclcpp/types/Sequence.h"
 #include "TTree.h"
 
-namespace art {class Event;}
+namespace art {class Event;};
 
 namespace mu2e {
 
@@ -27,12 +27,16 @@ namespace mu2e {
         const ComboHitCollection* chcol_;
 
         Int_t   iev_;
-        Int_t   Nch_,chSel_[kMaxHits],chNhit_[kMaxHits],chPdg_[kMaxHits],chCrCode_[kMaxHits],chSimId_[kMaxHits];
-        Float_t chTime_[kMaxHits], chPhi_[kMaxHits],chRad_[kMaxHits],chX_[kMaxHits],chY_[kMaxHits],chZ_[kMaxHits];
-        Int_t   nhit1_,nclu1_[kMaxHits],hitIdx1_[kMaxHits];
-        Int_t   nhit2_,nclu2_[kMaxHits],hitIdx2_[kMaxHits];
+        Int_t   Nch_,chSel_[kMaxHits],chNhit_[kMaxHits],chPdg_[kMaxHits],chCrCode_[kMaxHits],chSimId_[kMaxHits],chUId_[kMaxHits];
+        Float_t chTime_[kMaxHits],chPhi_[kMaxHits],chRad_[kMaxHits],chX_[kMaxHits],chY_[kMaxHits],chZ_[kMaxHits];
+        Float_t chTerr_[kMaxHits],chWerr_[kMaxHits],chWDX_[kMaxHits],chWDY_[kMaxHits];
 
-        void  reset() {Nch_=nhit1_=nhit2_=0;}
+        Int_t   nhit1_,iclu1_[kMaxHits],hitIdx1_[kMaxHits];
+        Int_t   nhit2_,iclu2_[kMaxHits],hitIdx2_[kMaxHits];
+        Int_t   nclu2_;
+        Float_t calo2X_[kMaxHits],calo2Y_[kMaxHits],calo2Z_[kMaxHits],calo2T_[kMaxHits],calo2E_[kMaxHits];
+
+        void  reset() {Nch_=nhit1_=nhit2_=nclu2_=0;}
     };
   }
 }

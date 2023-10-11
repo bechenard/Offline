@@ -59,6 +59,11 @@
 #include <vector>
 #include <set>
 #include <map>
+#include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
+#include "Offline/MCDataProducts/inc/MCRelationship.hh"
+#include "Offline/MCDataProducts/inc/SimParticle.hh"
+#include "Offline/RecoDataProducts/inc/StrawHitPosition.hh"
+#include "TTree.h"
 
 namespace fhicl {
   class ParameterSet;
@@ -118,6 +123,16 @@ namespace mu2e {
     CalHelixFinderTypes::Data_t           _data;
 
     std::unique_ptr<ModuleHistToolBase>   _hmanager;
+
+      art::InputTag  mcdigisTag_;
+      TTree*  ntup_;
+      Int_t   iev_,Nch_,chNhit_[8192],chPdg_[8192],chCrCode_[8192],chSimId_[8192];
+      Float_t chTime_[8192],chPhi_[8192],chRad_[8192],chX_[8192],chY_[8192],chZ_[8192];
+      Float_t chTerr_[8192],chWerr_[8192],chWDX_[8192],chWDY_[8192];
+      Int_t   Nhel_,helhel_[128],helnhi_[128];
+      Float_t helrad_[128],helrcen_[128],helfcen_[128],hellam_[128],helfz0_[128],helchi2_[128];
+      std::vector<std::vector<int>> helhits_;
+      std::vector<std::vector<uint16_t>> chStrawId_;
 //-----------------------------------------------------------------------------
 // functions
 //-----------------------------------------------------------------------------

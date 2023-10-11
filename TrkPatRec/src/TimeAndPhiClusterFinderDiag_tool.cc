@@ -6,6 +6,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
+#include "Offline/MCDataProducts/inc/MCRelationship.hh"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "Offline/Mu2eUtilities/inc/ModuleHistToolBase.hh"
 #include "Offline/TrkPatRec/inc/TimeAndPhiClusterFinder_types.hh"
@@ -87,12 +88,23 @@ namespace mu2e {
     trkdiag_->Branch("chX",       &data_->chX_,       "chX[Nch]/F");
     trkdiag_->Branch("chY",       &data_->chY_,       "chY[Nch]/F");
     trkdiag_->Branch("chZ",       &data_->chZ_,       "chZ[Nch]/F");
+    trkdiag_->Branch("chUId",     &data_->chUId_,     "chUId[Nch]/I");
+    trkdiag_->Branch("chTerr",    &data_->chTerr_,    "chTerr[Nch]/F");
+    trkdiag_->Branch("chWerr",    &data_->chWerr_,    "chWerr[Nch]/F");
+    trkdiag_->Branch("chWDX",     &data_->chWDX_,     "chWDX[Nch]/F");
+    trkdiag_->Branch("chWDY",     &data_->chWDY_,     "chWDY[Nch]/F");
     trkdiag_->Branch("nhit1",     &data_->nhit1_,     "nhit1/I");
     trkdiag_->Branch("hitIdx1",   &data_->hitIdx1_,   "hitIdx1[nhit1]/I");
-    trkdiag_->Branch("nclu1",     &data_->nclu1_,     "nclu1[nhit1]/I");
+    trkdiag_->Branch("iclu1",     &data_->iclu1_,     "iclu1[nhit1]/I");
     trkdiag_->Branch("nhit2",     &data_->nhit2_,     "nhit2/I");
     trkdiag_->Branch("hitIdx2",   &data_->hitIdx2_,   "hitIdx2[nhit2]/I");
-    trkdiag_->Branch("nclu2",     &data_->nclu2_,     "nclu2[nhit2]/I");
+    trkdiag_->Branch("iclu2",     &data_->iclu2_,     "iclu2[nhit2]/I");
+    trkdiag_->Branch("nclu2",     &data_->nclu2_,     "nclu2/I");
+    trkdiag_->Branch("calo2X",    &data_->calo2X_,    "calo2X[nclu2]/F");
+    trkdiag_->Branch("calo2Y",    &data_->calo2Y_,    "calo2Y[nclu2]/F");
+    trkdiag_->Branch("calo2Z",    &data_->calo2Z_,    "calo2Z[nclu2]/F");
+    trkdiag_->Branch("calo2T",    &data_->calo2T_,    "calo2T[nclu2]/F");
+    trkdiag_->Branch("calo2E",    &data_->calo2E_,    "calo2E[nclu2]/F");
 
     treeInit_ = true;
   }

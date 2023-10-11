@@ -62,7 +62,8 @@ namespace mu2e {
     _minNHitsTimeCluster(pset.get<int>   ("minNHitsTimeCluster"            )),
     _tpart              ((TrkParticle::type)(pset.get<int>("fitparticle"))),
     _fdir               ((TrkFitDirection::FitDirection)(pset.get<int>("fitdirection"))),
-    _hfinder            (pset.get<fhicl::ParameterSet>("HelixFinderAlg",fhicl::ParameterSet())){
+    _hfinder            (pset.get<fhicl::ParameterSet>("HelixFinderAlg",fhicl::ParameterSet())),
+mcdigisTag_("compressDigiMCs"){
       consumes<ComboHitCollection>(_shLabel);
       consumes<TimeClusterCollection>(_timeclLabel);
 
@@ -99,6 +100,34 @@ namespace mu2e {
   void CalHelixFinder::beginJob(){
     art::ServiceHandle<art::TFileService> tfs;
     _hmanager->bookHistograms(tfs);
+       ntup_  = tfs->make<TTree>("rhfdiag", "rhfdiag");
+       ntup_->Branch("iev",       &iev_,       "iev/I");
+       ntup_->Branch("Nch",       &Nch_,       "Nch/I");
+       ntup_->Branch("chNhit",    &chNhit_,    "chNhit[Nch]/I");
+       ntup_->Branch("chPdg",     &chPdg_,     "chPdg[Nch]/I");
+       ntup_->Branch("chCrCode",  &chCrCode_,  "chCrCode[Nch]/I");
+       ntup_->Branch("chSimId",   &chSimId_,   "chSimId[Nch]/I");
+       ntup_->Branch("chTime",    &chTime_,    "chTime[Nch]/F");
+       ntup_->Branch("chPhi",     &chPhi_,     "chPhi[Nch]/F");
+       ntup_->Branch("chRad",     &chRad_,     "chRad[Nch]/F");
+       ntup_->Branch("chX",       &chX_,       "chX[Nch]/F");
+       ntup_->Branch("chY",       &chY_,       "chY[Nch]/F");
+       ntup_->Branch("chZ",       &chZ_,       "chZ[Nch]/F");
+       ntup_->Branch("chTerr",    &chTerr_,    "chTerr[Nch]/F");
+       ntup_->Branch("chWerr",    &chWerr_,    "chWerr[Nch]/F");
+       ntup_->Branch("chWDX",     &chWDX_,     "chWDX[Nch]/F");
+       ntup_->Branch("chWDY",     &chWDY_,     "chWDY[Nch]/F");
+       ntup_->Branch("chStrawId", &chStrawId_);
+       ntup_->Branch("Nhel",      &Nhel_,      "Nhel/I");
+       ntup_->Branch("helhel",    &helhel_,    "helhel[Nhel]/I");
+       ntup_->Branch("helrad",    &helrad_,    "helrad[Nhel]/F");
+       ntup_->Branch("helrcen",   &helrcen_,   "helrcen[Nhel]/F");
+       ntup_->Branch("helfcen",   &helfcen_,   "helfcen[Nhel]/F");
+       ntup_->Branch("hellam",    &hellam_,    "hellam[Nhel]/F");
+       ntup_->Branch("helchi2",   &helchi2_,   "helchi2[Nhel]/F");
+       ntup_->Branch("helfz0",    &helfz0_,    "helfz0[Nhel]/F");
+       ntup_->Branch("helnhi",    &helnhi_,    "helnhi[Nhel]/I");
+       ntup_->Branch("helhits",   &helhits_);
   }
 
 //-----------------------------------------------------------------------------
@@ -415,6 +444,59 @@ namespace mu2e {
       for(auto & helix : *helcols[hel] ) {
         helix._status.merge(TrkFitFlag::CPRHelix);
       }
+    iev_ = event.id().event();
+    Nch_ = _chcol->size();
+    for (unsigned ich=0; ich<_chcol->size();++ich)
+    {
+       chTime_[ich] = _chcol->at(ich).correctedTime();
+       chRad_[ich]  = sqrt(_chcol->at(ich).pos().x()*_chcol->at(ich).pos().x()+_chcol->at(ich).pos().y()*_chcol->at(ich).pos().y());
+       chPhi_[ich]  = _chcol->at(ich).pos().phi();
+       chNhit_[ich] = _chcol->at(ich).nStrawHits();
+       chX_[ich]    = _chcol->at(ich).pos().x();
+       chY_[ich]    = _chcol->at(ich).pos().y();
+       chZ_[ich]    = _chcol->at(ich).pos().z();
+       chTerr_[ich] = _chcol->at(ich).posRes(StrawHitPosition::trans);
+       chWerr_[ich] = _chcol->at(ich).posRes(StrawHitPosition::wire);
+       chWDX_[ich]  = _chcol->at(ich).wdir().x();
+       chWDY_[ich]  = _chcol->at(ich).wdir().y();
+       std::vector<StrawHitIndex> strawHitIdxs;
+       _chcol->fillStrawHitIndices(ich,strawHitIdxs);
+       chStrawId_.push_back(strawHitIdxs);
+    }
+
+    auto mcdigis = *(event.getValidHandle<StrawDigiMCCollection>(mcdigisTag_));
+    for (int ich=0; ich <Nch_ ; ++ich){
+      std::vector<StrawDigiIndex> dids;
+      _chcol->fillStrawDigiIndices(ich,dids);
+      const StrawDigiMC& mcdigi        = mcdigis.at(dids[0]);// taking 1st digi: is there a better idea??
+      const art::Ptr<SimParticle>& spp = mcdigi.earlyStrawGasStep()->simParticle();
+      chPdg_[ich]    = spp->pdgId();
+      chCrCode_[ich] = spp->creationCode();
+      chSimId_[ich]  = spp->id().asInt();
+    }
+
+    Nhel_ = 0;
+    helhits_.clear();
+
+    for (const auto& helix : *helcols[Helicity::poshel]){
+      std::vector<int> hhits;
+      for (auto hi : helix.hits()){
+        for (size_t j=0;j<_chcol->size();++j){
+          if (hi.index(0)==_chcol->at(j).index(0)) {hhits.push_back(j); break;}
+        }
+      }
+      helhel_[Nhel_]  = 1;
+      helrad_[Nhel_]  = helix.helix().radius();
+      helrcen_[Nhel_] = helix.helix().rcent();
+      helfcen_[Nhel_] = helix.helix().fcent();
+      hellam_[Nhel_]  = helix.helix().lambda();
+      helfz0_[Nhel_]  = helix.helix().fz0();
+      helchi2_[Nhel_] = helix.helix().chi2dZPhi();
+      helnhi_[Nhel_]  = hhits.size();
+      helhits_.push_back(hhits);
+      ++Nhel_;
+   }
+   ntup_->Fill();
 
       event.put(std::move(helcols[hel]),Helicity::name(hel));
     }

@@ -54,6 +54,13 @@
 #include "TH1F.h"
 #include "Math/VectorUtil.h"
 #include "TVector2.h"
+#include "TDirectory.h"
+#include "TNtuple.h"
+#include "TTree.h"
+#include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
+#include "Offline/MCDataProducts/inc/MCRelationship.hh"
+#include "Offline/MCDataProducts/inc/SimParticle.hh"
+#include "Offline/RecoDataProducts/inc/StrawHitPosition.hh"
 
 #include <iostream>
 #include <fstream>
@@ -228,6 +235,17 @@ namespace mu2e {
       void     fillPluginDiag     (RobustHelixFinderData& helixData, int helCounter);
       void     updateHelixXYInfo  (RobustHelixFinderData& helixData);
       void     updateHelixZPhiInfo(RobustHelixFinderData& helixData);
+
+      art::InputTag  mcdigisTag_;
+      TTree*  ntup_;
+      Int_t   Nch_,chNhit_[8192],chPdg_[8192],chCrCode_[8192],chSimId_[8192];
+      Float_t chTime_[8192],chPhi_[8192],chRad_[8192],chX_[8192],chY_[8192],chZ_[8192];
+      Float_t chTerr_[8192],chWerr_[8192],chWDX_[8192],chWDY_[8192];
+      Int_t   Nhel_,helhel_[128],helnhi_[128];
+      Float_t helrad_[128],helrcen_[128],helfcen_[128],hellam_[128],helfz0_[128],helchi2_[128];
+      std::vector<std::vector<int>> helhits_;
+      std::vector<std::vector<uint16_t>> chStrawId_;
+      int iev_;
   };
 
   RobustHelixFinder::RobustHelixFinder(const art::EDProducer::Table<Config>& config):
@@ -269,7 +287,8 @@ namespace mu2e {
     _hfit        (config().HelixFitter()),
     _ttcalc      (config().T0Calculator()),
     _outlier     (StrawHitFlag::outlier),
-    _updateStereo(config().UpdateStereo())
+    _updateStereo(config().UpdateStereo()),
+mcdigisTag_("compressDigiMCs")
     {
       std::vector<int> helvals = config().Helicities();
       for(auto hv : helvals) {
@@ -303,18 +322,47 @@ namespace mu2e {
       std::cout << "RobustHeilxFinder Non-Stereo Hit MVA parameters: " << std::endl;
       _nsmva.showMVA();
     }
+      art::ServiceHandle<art::TFileService> tfs;
 
     if (_diag > 0){
-      art::ServiceHandle<art::TFileService> tfs;
       _niter = tfs->make<TH1F>( "niter" , "Number of Fit Iteraions",201,-0.5,200.5);
       _niterxy = tfs->make<TH1F>( "niterxy" , "Number of XY Fit Iteraions",201,-0.5,200.5);
       _niterfz = tfs->make<TH1F>( "niterfz" , "Number of FZ Fit Iteraions",201,-0.5,200.5);
       _nitermva = tfs->make<TH1F>( "nitermva" , "Number of MVA Fit Iteraions",201,-0.5,200.5);
       _hmanager->bookHistograms(tfs);
     }
+       ntup_  = tfs->make<TTree>("rhfdiag", "rhfdiag");
+       ntup_->Branch("iev",       &iev_,       "iev/I");
+       ntup_->Branch("Nch",       &Nch_,       "Nch/I");
+       ntup_->Branch("chNhit",    &chNhit_,    "chNhit[Nch]/I");
+       ntup_->Branch("chPdg",     &chPdg_,     "chPdg[Nch]/I");
+       ntup_->Branch("chCrCode",  &chCrCode_,  "chCrCode[Nch]/I");
+       ntup_->Branch("chSimId",   &chSimId_,   "chSimId[Nch]/I");
+       ntup_->Branch("chTime",    &chTime_,    "chTime[Nch]/F");
+       ntup_->Branch("chPhi",     &chPhi_,     "chPhi[Nch]/F");
+       ntup_->Branch("chRad",     &chRad_,     "chRad[Nch]/F");
+       ntup_->Branch("chX",       &chX_,       "chX[Nch]/F");
+       ntup_->Branch("chY",       &chY_,       "chY[Nch]/F");
+       ntup_->Branch("chZ",       &chZ_,       "chZ[Nch]/F");
+       ntup_->Branch("chTerr",    &chTerr_,    "chTerr[Nch]/F");
+       ntup_->Branch("chWerr",    &chWerr_,    "chWerr[Nch]/F");
+       ntup_->Branch("chWDX",     &chWDX_,     "chWDX[Nch]/F");
+       ntup_->Branch("chWDY",     &chWDY_,     "chWDY[Nch]/F");
+       ntup_->Branch("chStrawId", &chStrawId_);
+       ntup_->Branch("Nhel",      &Nhel_,      "Nhel/I");
+       ntup_->Branch("helhel",    &helhel_,    "helhel[Nhel]/I");
+       ntup_->Branch("helrad",    &helrad_,    "helrad[Nhel]/F");
+       ntup_->Branch("helrcen",   &helrcen_,   "helrcen[Nhel]/F");
+       ntup_->Branch("helfcen",   &helfcen_,   "helfcen[Nhel]/F");
+       ntup_->Branch("hellam",    &hellam_,    "hellam[Nhel]/F");
+       ntup_->Branch("helfz0",    &helfz0_,    "helfz0[Nhel]/F");
+       ntup_->Branch("helchi2",   &helchi2_,   "helchi2[Nhel]/F");
+       ntup_->Branch("helnhi",    &helnhi_,    "helnhi[Nhel]/I");
+       ntup_->Branch("helhits",   &helhits_);
   }
 
   void RobustHelixFinder::produce(art::Event& event ) {
+iev_ = event.id().event();
 
     _tracker = _alignedTracker_h.getPtr(event.id()).get();
     _hfit.setTracker    (_tracker);
@@ -435,6 +483,76 @@ namespace mu2e {
     }
     // put final collections into event
     if (_diag > 0) _hmanager->fillHistograms(&_data);
+    Nch_ = chcol.size();
+    for (unsigned ich=0; ich<chcol.size();++ich)
+    {
+       chTime_[ich] = chcol[ich].correctedTime();
+       chRad_[ich]  = sqrt(chcol[ich].pos().x()*chcol[ich].pos().x()+chcol[ich].pos().y()*chcol[ich].pos().y());
+       chPhi_[ich]  = chcol[ich].pos().phi();
+       chNhit_[ich] = chcol[ich].nStrawHits();
+       chX_[ich]    = chcol[ich].pos().x();
+       chY_[ich]    = chcol[ich].pos().y();
+       chZ_[ich]    = chcol[ich].pos().z();
+       chTerr_[ich] = chcol[ich].posRes(StrawHitPosition::trans);
+       chWerr_[ich] = chcol[ich].posRes(StrawHitPosition::wire);
+       chWDX_[ich]  = chcol[ich].wdir().x();
+       chWDY_[ich]  = chcol[ich].wdir().y();
+       std::vector<StrawHitIndex> strawHitIdxs;
+       chcol.fillStrawHitIndices(ich,strawHitIdxs);
+       chStrawId_.push_back(strawHitIdxs);
+   }
+
+    auto mcdigis = *(event.getValidHandle<StrawDigiMCCollection>(mcdigisTag_));
+    for (int ich=0; ich <Nch_ ; ++ich){
+      std::vector<StrawDigiIndex> dids;
+      chcol.fillStrawDigiIndices(ich,dids);
+      const StrawDigiMC& mcdigi        = mcdigis.at(dids[0]);// taking 1st digi: is there a better idea??
+      const art::Ptr<SimParticle>& spp = mcdigi.earlyStrawGasStep()->simParticle();
+      chPdg_[ich]    = spp->pdgId();
+      chCrCode_[ich] = spp->creationCode();
+      chSimId_[ich]  = spp->id().asInt();
+    }
+
+    Nhel_ = 0;
+    helhits_.clear();
+    for (const auto& helix : *helcols[Helicity::poshel]){
+      std::vector<int> hhits;
+      for (auto hi : helix.hits()){
+        for (size_t j=0;j<chcol.size();++j){
+          if (hi.index(0)==chcol[j].index(0)) {hhits.push_back(j); break;}
+        }
+      }
+      helhel_[Nhel_]  = 1;
+      helrad_[Nhel_]  = helix.helix().radius();
+      helrcen_[Nhel_] = helix.helix().rcent();
+      helfcen_[Nhel_] = helix.helix().fcent();
+      hellam_[Nhel_]  = helix.helix().lambda();
+      helfz0_[Nhel_]  = helix.helix().fz0();
+      helchi2_[Nhel_] = helix.helix().chi2dZPhi();
+      helnhi_[Nhel_]  = hhits.size();
+      helhits_.push_back(hhits);
+      ++Nhel_;
+   }
+   for (const auto& helix : *helcols[Helicity::neghel]){
+      std::vector<int> hhits;
+      for (auto hi : helix.hits()){
+        for (size_t j=0;j<chcol.size();++j){
+          if (hi.index(0)==chcol[j].index(0)) {hhits.push_back(j); break;}
+        }
+      }
+      helhel_[Nhel_]  = -1;
+      helrad_[Nhel_]  = helix.helix().radius();
+      helrcen_[Nhel_] = helix.helix().rcent();
+      helfcen_[Nhel_] = helix.helix().fcent();
+      hellam_[Nhel_]  = helix.helix().lambda();
+      helfz0_[Nhel_]  = helix.helix().fz0();
+      helchi2_[Nhel_] = helix.helix().chi2dZPhi();
+      helnhi_[Nhel_]  = hhits.size();
+      helhits_.push_back(hhits);
+      ++Nhel_;
+    }
+
+    ntup_->Fill();
 
     for(auto const& hel : _hels ) {
       event.put(std::move(helcols[hel]),Helicity::name(hel));

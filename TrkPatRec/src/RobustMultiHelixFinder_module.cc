@@ -41,7 +41,7 @@ namespace {
     unsigned              nsh_;
     float                 x_,y_,r_,fita_zp_,fitb_zp_,fita_zt_,fitb_zt_;
     std::vector<unsigned> hits_;
-    artCptr               caloPtr_;
+    artCptr caloPtr_;
   };
 
   struct LSFitter
@@ -202,18 +202,16 @@ namespace mu2e {
        hels_.emplace_back(hel);
        produces<HelixSeedCollection>(Helicity::name(hel));
      }
-
      if (diag_) diagTool_ = art::make_tool<ModuleHistToolBase>(config().diagPlugin," ");
   }
 
 
   //--------------------------------------------------------------------------------------------------------------
-  void RobustMultiHelixFinder::beginJob()
-  {
-    if (diag_){
-       art::ServiceHandle<art::TFileService> tfs;
-       diagTool_->bookHistograms(tfs);
-    }
+  void RobustMultiHelixFinder::beginJob(){
+      if (diag_){
+         art::ServiceHandle<art::TFileService> tfs;
+         diagTool_->bookHistograms(tfs);
+      }
   }
 
 
@@ -248,7 +246,7 @@ namespace mu2e {
 
     if (diag_) {data_.reset(); data_.event_=&event; data_.chcol_ = &chcol;}
 
-    for (size_t index=0;index<tccol.size();++index){
+    for (size_t index=0;index<tccol.size();++index) {
       const auto tcArtPtr = art::Ptr<TimeCluster>(tcH,index);
       const auto& tc = tccol[index];
       findHelicesInTC(helcols,tcArtPtr,tc,chcol);
@@ -257,7 +255,7 @@ namespace mu2e {
     filterDuplicateHelices(*helcols[Helicity::poshel]);
     filterDuplicateHelices(*helcols[Helicity::neghel]);
 
-    if (diag_){
+    if (diag_) {
       fillDiag(helcols,chcol);
       diagTool_->fillHistograms(&data_);
       if (diag_>2) for (const auto& hel : *helcols[Helicity::poshel]) printHelix(hel);
@@ -339,9 +337,8 @@ namespace mu2e {
       }
       chi2dXY   /= bestHelix.nsh_;
       chi2dZPhi /= bestHelix.nsh_;
-
-      // --- Dirty hack to save particle propagation, will need to be fixed in the data product the future ---
-      chi2dXY = bestHelix.fita_zt_;
+//Dirty hack to save particle propagation
+chi2dXY = bestHelix.fita_zt_;
 
       float Rcent  = sqrt(bestHelix.x_*bestHelix.x_+bestHelix.y_*bestHelix.y_);
       float Fcent  = polyAtan2(bestHelix.y_,bestHelix.x_);
@@ -473,7 +470,7 @@ namespace mu2e {
           if (ilast<chcol.size()) {stubby.push_back(hits[ilast]);nsh += chcol[hits[ilast]].nStrawHits(); sumChisq+=val_prev;}
           sumChisq /= nsh;
 
-          //Potential improvement, check if a cut on the number of hits flagged as Compton would help
+          //Should check how many hits flagged as COmpton are in there!
 
           art::Ptr<CaloCluster> thisCaloPtr{};
           if (caloPtr && caloPtr->energyDep()>ccMinEnergy_) {
@@ -631,8 +628,9 @@ namespace mu2e {
             float delta = abs((chcol[ich].pos().z()-fb)/fa-p2);
 
             //abort if we skip more than one loop from one hit to the next
-            if (nloop>nloop_prev+1) {nhits=0; break;}
-            if (delta > MaxDPhiHelInit_) continue;
+ if (nloop>nloop_prev+1) {nhits=0; break;}
+ //if (abs(nloop-nloop_prev)>1) {nhits=0; break;}
+           if (delta > MaxDPhiHelInit_) continue;
 
             nloop_prev = nloop;
             nhits     += chcol[ich].nStrawHits();
@@ -737,13 +735,13 @@ namespace mu2e {
     int nRemoved(0);
     auto it = circle.hits_.size();
     while (it>0){
-      --it;
-      unsigned ich = circle.hits_[it];
-      float delta  = abs(circle.fita_zt_*chcol[ich].pos().z()+circle.fitb_zt_ - chcol[ich].correctedTime());
-      if (delta < maxDt) continue;
+       --it;
+       unsigned ich = circle.hits_[it];
+       float delta  = abs(circle.fita_zt_*chcol[ich].pos().z()+circle.fitb_zt_ - chcol[ich].correctedTime());
+       if (delta < maxDt) continue;
 
-      circle.remove(it, chcol[ich].nStrawHits());
-      ++nRemoved;
+       circle.remove(it, chcol[ich].nStrawHits());
+       ++nRemoved;
     }
     return nRemoved;
   }
@@ -770,16 +768,16 @@ namespace mu2e {
 
     float Mxx(0),Mxy(0),Myy(0),Mxz(0),Myz(0),Mzz(0);
     for (const auto &ich : circle.hits_){
-      float xx = chcol[ich].pos().x()-xmean;
-      float yy = chcol[ich].pos().y()-ymean;
-      float zz = xx*xx+yy*yy;
-      float w  = hitWeight[ich];
-      Mxy += xx*yy*w;
-      Mxx += xx*xx*w;
-      Myy += yy*yy*w;
-      Mxz += xx*zz*w;
-      Myz += yy*zz*w;
-      Mzz += zz*zz*w;
+        float xx = chcol[ich].pos().x()-xmean;
+        float yy = chcol[ich].pos().y()-ymean;
+        float zz = xx*xx+yy*yy;
+        float w  = hitWeight[ich];
+        Mxy += xx*yy*w;
+        Mxx += xx*xx*w;
+        Myy += yy*yy*w;
+        Mxz += xx*zz*w;
+        Myz += yy*zz*w;
+        Mzz += zz*zz*w;
     }
     Mxx /= sumWeights;
     Myy /= sumWeights;
@@ -799,12 +797,12 @@ namespace mu2e {
     unsigned iterMAX = 10;
     float x(0.0),y(A0);
     for (unsigned iter=0; iter<iterMAX; ++iter)  {
-      float Dy = A1 + x*(A22 + 16.*x*x);
-      float xnew = x - y/Dy;
-      if (abs(xnew-x) < 1e-4 || abs(x) > 1e10) break;
-      float ynew = A0 + xnew*(A1 + xnew*(A2 + 4.0*xnew*xnew));
-      if (abs(ynew)> abs(y)) break;
-      x = xnew;  y = ynew;
+        float Dy = A1 + x*(A22 + 16.*x*x);
+        float xnew = x - y/Dy;
+        if (abs(xnew-x) < 1e-4 || abs(x) > 1e10) break;
+        float ynew = A0 + xnew*(A1 + xnew*(A2 + 4.0*xnew*xnew));
+        if (abs(ynew)> abs(y)) break;
+        x = xnew;  y = ynew;
     }
 
     float DET = x*x - x*Mz + Cov_xy;
