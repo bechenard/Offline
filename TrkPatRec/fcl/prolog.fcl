@@ -54,29 +54,25 @@ TimeClusterFinder : {
 
 
 # time clustering is the 1st stage of track finding
-TimeAndPhiClusterFinder : {
+TimeClusterFinderNew : {
   module_type             : TimeAndPhiClusterFinder
-  ComboHitCollection     : "makePH"
+  ComboHitCollection     : "FlagBkgHits"
   CaloClusterCollection  : "CaloClusterMaker"
   HitSelectionBits       : ["EnergySelection","TimeSelection","RadiusSelection"]
   HitBackgroundBits      : @local::PatRecBackground
   MVATime                : { MVAWeights : "Offline/TrkPatRec/data/TimePhiCluster.weights.xml" }
-  TestFlag               : true
-  UseCaloCluster         : false
-  CaloClusterMinE        : 50.0
-  CaloClusterWeight      : 10.0
-  AlgoAssignHits         : 1
-  MinNSHits              : 10
+  UseCaloCluster         : true
+  MinNSHits              : 8
   Tbin                   : 15.0
   MinTimeYbin            : 6
-  MaxTimeDT              : 35.0
-  FilterMVA              : true
-  MinHitSelect           : 50
+  MaxTimeDT              : 30.0
+  MaxFitDT               : 25.0
+  FilterMVA              : false
   MinCutMVA              : 0.1
   SplitPhi               : true
-  MaxDeltaPhi            : 0.3
+  MaxDeltaPhi            : 0.5
   MaxNdiff               : 1
-  Diag                   : 0
+  Diag                   : 1
 
   DiagPlugin : {
     tool_type             : "TimeAndPhiClusterFinderDiag"
@@ -85,6 +81,30 @@ TimeAndPhiClusterFinder : {
   }
 }
 
+
+# time clustering is the 1st stage of track finding
+TimeClusterFinderNew2 : {
+  module_type             : TimeAndPhiClusterFinder2
+  ComboHitCollection     : "FlagBkgHits"
+  CaloClusterCollection  : "CaloClusterMaker"
+  HitSelectionBits       : ["EnergySelection","TimeSelection","RadiusSelection"]
+  HitBackgroundBits      : @local::PatRecBackground
+  MVATime                : { MVAWeights : "Offline/TrkPatRec/data/TimePhiCluster.weights.xml" }
+  UseCaloCluster         : true
+  MinNSHits              : 8
+  Tbin                   : 15.0
+  MinTimeYbin            : 6
+  MaxTimeDT              : 30.0
+  MaxFitDT               : 25.0
+  MaxDeltaPhi            : 0.5
+  Diag                   : 1
+
+  DiagPlugin : {
+    tool_type             : "TimeAndPhiClusterFinderDiag"
+    MCDiag                : true
+    StrawDigiMCCollection : "compressDigiMCs"
+  }
+}
 
 
 # specific time cluster finders for different particle hypotheses.  The redundant Calo time offset should come from conditions FIXME!
@@ -142,16 +162,15 @@ TimeClusterFinderUpi : {
 }
 
 
-RobustMultiHelixFinder : {
+RobustHelixFinder : {
   module_type   : RobustMultiHelixFinder
   ComboHitCollection      : "makePH"
   TimeClusterCollection   : "TimeClusterFinderDe"
   Helicities              : [-1,1]
-  MinDRCircle             : 40
+  MinDRCircle             : 50
   MinRadCircle            : 150
   MaxRadCircle            : 350
   MinDXY2Circle           : 1600
-  MaxDXY2Circle           : 1.6e6
   ClusteringPhiBin        : 0.1
   ClusteringMinBin        : 30
   TargetCon               : false
@@ -164,12 +183,12 @@ RobustMultiHelixFinder : {
   MaxDTHelFit             : 25
   CaloClusterMinE         : 30
   CaloClusterWeight       : 5
-  MaxChi2Hit              : 50
+  MaxChi2Hit              : 20
   MinDZTrk                : 1500
-  FitCircleAlgorithm      : 1
+  FitCircleStrategy       : "HyperFit"
   MinStrawHits            : 10
   NMaxTrkIter             : 3
-  DiagLevel               : 0
+  DiagLevel               : 1
 
   DiagPlugin : {
     tool_type             : "RobustMultiHelixFinderDiag"
@@ -179,7 +198,7 @@ RobustMultiHelixFinder : {
 }
 
 # helix finding.  Search for both helicities
-RobustHelixFinder : {
+RobustHelixFinderOld : {
   module_type   : RobustHelixFinder
   ComboHitCollection     : "FlagBkgHits"
   HelixStereoHitMVA      : { MVAWeights : "Offline/TrkPatRec/data/HelixStereoHitMVA.weights.xml" }

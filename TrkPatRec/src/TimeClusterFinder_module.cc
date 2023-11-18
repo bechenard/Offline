@@ -43,6 +43,9 @@
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
 #include "Offline/MCDataProducts/inc/MCRelationship.hh"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
+#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
+#include "Offline/GeometryService/inc/GeomHandle.hh"
+#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
 using namespace std;
 using namespace boost::accumulators;
 
@@ -148,17 +151,17 @@ namespace mu2e {
 
       TTree*  trkdiag_;
       Int_t   iev_;
-      Int_t   Nch_,chSel_[8192],chNhit_[8192],chPdg_[8192],chCrCode_[8192],chSimId_[8192],chUId_[8192];
+      Int_t   Nch_,chSel_[8192],chSel2_[8192],chNhit_[8192],chPdg_[8192],chCrCode_[8192],chSimId_[8192],chUId_[8192];
       Float_t chTime_[8192], chPhi_[8192],chRad_[8192],chX_[8192],chY_[8192],chZ_[8192];
       Float_t chTerr_[8192],chWerr_[8192],chWDX_[8192],chWDY_[8192];
       Int_t   Ncal_;
       Int_t   nhit1_,iclu1_[8192],hitIdx1_[8192];
       Int_t   nhit2_,iclu2_[8192],hitIdx2_[8192];
       Int_t   nhit3_,iclu3_[8192],hitIdx3_[8192];
-      Int_t   nclu2_;
+      Int_t   ncalo_;
       Float_t calo2X_[8192],calo2Y_[8192],calo2Z_[8192],calo2T_[8192],calo2E_[8192];
 
-      void findClusters(TimeClusterCollection& tccol);
+      void findClusters(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection> const& ccH);
       void findCaloSeeds(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection> const& ccH);
       void fillTimeSpectrum();
       void initCluster(TimeCluster& tc);
@@ -171,6 +174,10 @@ namespace mu2e {
       void findPeaks(TimeClusterCollection& seeds);
       void assignHits(TimeClusterCollection& tccol );
       bool goodHit(const StrawHitFlag& flag) const;
+
+  void timeClusterFromCalo(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection>const& ccH);
+
+
   };
 
 
@@ -226,6 +233,7 @@ namespace mu2e {
     trkdiag_->Branch("iev",       &iev_,       "iev/I");
     trkdiag_->Branch("Nch",       &Nch_,       "Nch/I");
     trkdiag_->Branch("chSel",     &chSel_,     "chSel[Nch]/I");
+    trkdiag_->Branch("chSel2",    &chSel2_,    "chSel2[Nch]/I");
     trkdiag_->Branch("chNhit",    &chNhit_,    "chNhit[Nch]/I");
     trkdiag_->Branch("chPdg",     &chPdg_,     "chPdg[Nch]/I");
     trkdiag_->Branch("chCrCode",  &chCrCode_,  "chCrCode[Nch]/I");
@@ -247,12 +255,13 @@ namespace mu2e {
     trkdiag_->Branch("nhit2",     &nhit2_,     "nhit2/I");
     trkdiag_->Branch("hitIdx2",   &hitIdx2_,   "hitIdx2[nhit2]/I");
     trkdiag_->Branch("iclu2",     &iclu2_,     "iclu2[nhit2]/I");
-    trkdiag_->Branch("nclu2",     &nclu2_,     "nclu2/I");
-    trkdiag_->Branch("calo2X",    &calo2X_,    "calo2X[nclu2]/F");
-    trkdiag_->Branch("calo2Y",    &calo2Y_,    "calo2Y[nclu2]/F");
-    trkdiag_->Branch("calo2Z",    &calo2Z_,    "calo2Z[nclu2]/F");
-    trkdiag_->Branch("calo2T",    &calo2T_,    "calo2T[nclu2]/F");
-    trkdiag_->Branch("calo2E",    &calo2E_,    "calo2E[nclu2]/F");
+
+    trkdiag_->Branch("ncalo",     &ncalo_,     "ncalo/I");
+    trkdiag_->Branch("calo2X",    &calo2X_,    "calo2X[ncalo]/F");
+    trkdiag_->Branch("calo2Y",    &calo2Y_,    "calo2Y[ncalo]/F");
+    trkdiag_->Branch("calo2Z",    &calo2Z_,    "calo2Z[ncalo]/F");
+    trkdiag_->Branch("calo2T",    &calo2T_,    "calo2T[ncalo]/F");
+    trkdiag_->Branch("calo2E",    &calo2E_,    "calo2E[ncalo]/F");
   }
 
 
@@ -280,8 +289,14 @@ namespace mu2e {
     Nch_= _chcol->size();
     for (unsigned ich=0; ich<_chcol->size();++ich)
     {
-         int selFlag = (!_testflag || goodHit((*_chcol)[ich].flag())) ? 1 : 0;
-         chSel_[ich] = selFlag;
+         auto flag = (*_chcol)[ich].flag();
+         int selFlag = goodHit(flag) ? 1 : 0;
+         int selFlag2(0);
+         if (!flag.hasAnyProperty(StrawHitFlag(_hsel)))        selFlag2 +=1;
+         if (flag.hasAnyProperty(StrawHitFlag("Background"))) selFlag2 +=2;
+
+         chSel_[ich]  = selFlag;
+         chSel2_[ich] = selFlag2;
          chTime_[ich] = _chcol->at(ich).correctedTime();
          chX_[ich]    = _chcol->at(ich).pos().x();
          chY_[ich]    = _chcol->at(ich).pos().y();
@@ -304,11 +319,28 @@ namespace mu2e {
          chSimId_[ich]  = spp->id().asInt();
     }
 
+    if (_usecc){
+      const Calorimeter* cal_ = &(*GeomHandle<Calorimeter>());
+      ncalo_=0;
+      for (const auto& cc : *_cccol){
+        if (cc.energyDep()<10) continue;
+        const auto  caloPosInMu2e  = cal_->geomUtil().diskFFToMu2e(cc.diskID(),cc.cog3Vector());
+        const auto  caloPosInTrk   = cal_->geomUtil().mu2eToTracker(caloPosInMu2e);
+        calo2X_[ncalo_] = caloPosInTrk.x();
+        calo2Y_[ncalo_] = caloPosInTrk.y();
+        calo2Z_[ncalo_] = caloPosInTrk.z();
+        calo2E_[ncalo_] = cc.energyDep();
+        calo2T_[ncalo_] = cc.time();
+        ++ncalo_;
+      }
+    }
+
+
     std::unique_ptr<TimeClusterCollection> tccol(new TimeClusterCollection);
     // If requested, use calo clusters to for time cluster seeds
     if (_usecc) findCaloSeeds(*tccol,ccH);
     // find all the hit clusters
-    findClusters(*tccol);
+    findClusters(*tccol,ccH);
 
 trkdiag_->Fill();
 
@@ -332,12 +364,15 @@ trkdiag_->Fill();
 
 
   //--------------------------------------------------------------------------------------------------------------
-  void TimeClusterFinder::findClusters(TimeClusterCollection& tccol) {
+  void TimeClusterFinder::findClusters(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection> const& ccH) {
     // find seed from hits
     fillTimeSpectrum();
     findPeaks(tccol);
     // associate hits to seeds
     assignHits(tccol);
+
+     if (_usecc) timeClusterFromCalo(tccol,ccH);
+
 int iclu1(0),ih1(0);
 for (const auto& tc : tccol)
 {
@@ -368,15 +403,15 @@ for (auto& ish : tc._strawHitIdxs)
    hitIdx2_[ih2]  = ish;
    ++ih2;
 }
-if (tc.caloCluster()){
-  calo2X_[iclu2] = tc.caloCluster()->cog3Vector().x();
-  calo2Y_[iclu2] = tc.caloCluster()->cog3Vector().y();
-  calo2Z_[iclu2] = tc.caloCluster()->cog3Vector().z();
-  calo2E_[iclu2] = tc.caloCluster()->energyDep();
-  calo2T_[iclu2] = tc.caloCluster()->time();
-} else {
-  calo2X_[iclu2]=calo2Y_[iclu2]=calo2Z_[iclu2]=calo2E_[iclu2]=calo2T_[iclu2]=0.0;
-}
+//if (tc.caloCluster()){
+//  calo2X_[iclu2] = tc.caloCluster()->cog3Vector().x();
+//  calo2Y_[iclu2] = tc.caloCluster()->cog3Vector().y();
+//  calo2Z_[iclu2] = tc.caloCluster()->cog3Vector().z();
+//  calo2E_[iclu2] = tc.caloCluster()->energyDep();
+//  calo2T_[iclu2] = tc.caloCluster()->time();
+//} else {
+//  calo2X_[iclu2]=calo2Y_[iclu2]=calo2Z_[iclu2]=calo2E_[iclu2]=calo2T_[iclu2]=0.0;
+//}
 ++iclu2;
       if (tc.nStrawHits() < _minnhits) {
         itc = tccol.erase(itc);
@@ -694,6 +729,54 @@ nhit2_=ih2;
   {
     return flag.hasAllProperties(_hsel) && !flag.hasAnyProperty(_hbkg);
   }
+
+
+
+
+
+  void TimeClusterFinder::timeClusterFromCalo(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection>const& ccH)
+  {
+      std::vector<float> chPhi;
+      chPhi.reserve(_chcol->size());
+      for (unsigned ich=0; ich<_chcol->size();++ich) {
+        ComboHit const& ch = (*_chcol)[ich];
+        chPhi.emplace_back(polyAtan2(ch.pos().y(),ch.pos().x()));
+      }
+
+      const Calorimeter* cal_ = &(*GeomHandle<Calorimeter>());
+
+
+      for (size_t icalo=0; icalo < _cccol->size(); ++icalo){
+          const auto& cluster =  (*_cccol)[icalo];
+          if (cluster.energyDep()<60) continue;
+
+          const auto trackerPos = cal_->geomUtil().mu2eToTracker(cal_->geomUtil().diskFFToMu2e(cluster.diskID(),cluster.cog3Vector()));
+          float caloZ   = trackerPos.z();
+          float caloPhi = polyAtan2(trackerPos.y(),trackerPos.x());
+          float caloT   = cluster.time();
+
+          float fabest(0.005);
+
+          TimeCluster tc;
+          for (unsigned ich=0; ich<_chcol->size();++ich) {
+            ComboHit const& ch = (*_chcol)[ich];
+          //  if (_testflag && !goodHit(ch.flag())) continue;
+
+            float dt2 = abs(ch.correctedTime()-fabest*(ch.pos().z()-caloZ)-caloT);
+            float dphi = std::min(6.2831f-fabs(chPhi[ich]-caloPhi), fabs(chPhi[ich]-caloPhi));
+            if (dt2>20 || fabs(dphi)>1.57) continue;
+
+            tc._strawHitIdxs.push_back(ich);
+            tc._nsh += ch.nStrawHits();
+          }
+          if (tc._nsh < 15) return;
+
+          tc._t0 = TrkT0(caloT-fabest*caloZ, 0.5);
+          tc._caloCluster = art::Ptr<CaloCluster>(ccH,icalo);
+          tccol.emplace_back(std::move(tc));
+      }
+  }
+
 
 }
 

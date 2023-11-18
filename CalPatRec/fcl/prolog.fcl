@@ -31,7 +31,7 @@ BEGIN_PROLOG
 # new format
 #------------------------------------------------------------------------------
 CalPatRec : {
-    minNStrawHits : 10
+    minNStrawHits : 1000
     chi2HitCut    : 25
     chi2hel3DMax  : 9
 }

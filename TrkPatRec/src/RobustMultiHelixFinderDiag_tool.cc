@@ -1,25 +1,24 @@
 #ifndef RobustMultiHelixFinderDiag_hh
 #define RobustMultiHelixFinderDiag_hh
 
+#include "art/Framework/Principal/Event.h"
 #include "art/Utilities/ToolMacros.h"
 #include "art/Utilities/make_tool.h"
+#include "art/Framework/Principal/Handle.h"
 #include "fhiclcpp/ParameterSet.h"
 
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
 #include "Offline/MCDataProducts/inc/MCRelationship.hh"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "Offline/Mu2eUtilities/inc/ModuleHistToolBase.hh"
-#include "Offline/TrkPatRec/inc/RobustMultiHelixFinder_types.hh"
 #include "Offline/RecoDataProducts/inc/ComboHit.hh"
+#include "Offline/TrkPatRec/inc/RobustMultiHelixFinder_types.hh"
 
 #include "TTree.h"
 
-#include "art/Framework/Principal/Event.h"
-#include "fhiclcpp/ParameterSet.h"
-#include "art/Framework/Principal/Handle.h"
-#include "Offline/GeometryService/inc/GeomHandle.hh"
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "Offline/GeometryService/inc/DetectorSystem.hh"
+//#include "Offline/GeometryService/inc/GeomHandle.hh"
+//#include "art/Framework/Core/EDAnalyzer.h"
+//#include "Offline/GeometryService/inc/DetectorSystem.hh"
 
 
 
