@@ -9,7 +9,7 @@ vector<double> scoring.meshHalfSizeX  = {36787.,    40000.0};
 vector<double> scoring.meshHalfSizeY  = {20366.,      500.0};
 vector<double> scoring.meshHalfSizeZ  = {52265.,    50000.0};
 vector<int>    scoring.meshSegmentX   = {100,           160};
-vector<int>    scoring.meshSegmentY   = {20,              1};
+vector<int>    scoring.meshSegmentY   = {42,              1};
 vector<int>    scoring.meshSegmentZ   = {100,           200};
 
 // This tells emacs to view this file in c++ mode.
