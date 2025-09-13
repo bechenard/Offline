@@ -134,6 +134,12 @@ namespace mu2e{
       throw cet::exception("BADINPUT")<<" decide on turnOn/OffRadioactiveDecay\n";
     }
 
+    if ( !phys.turnOnRadioactiveDecay() && phys.radiationVRmode() ) {
+      mf::LogError("Config") << "Inconsistent config";
+      G4cout << "Error: turnOnRadioactiveDecay false & radiationVRmode on" << G4endl;
+      throw cet::exception("BADINPUT")<<" turn on RadioactiveDecay or turn off VRmode\n";
+    }
+
     if (phys.turnOnRadioactiveDecay()) {
       if (phys.radiationVRmode()){
         tmpPL->RemovePhysics("G4RadioactiveDecay");
