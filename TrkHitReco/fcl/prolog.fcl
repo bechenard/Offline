@@ -11,7 +11,9 @@ TrkHitReco :{
       DBSminExpand    : 2
       DeltaTime       : 15
       DeltaZ          : 800
-      DeltaXY         : 50
+      DeltaR          : 50
+      DeltaChi2       : 50
+      UseChi2Cut      : true
       MinClusterHits  : 1
       TestFlag        : false
       BackgroundMask  : []

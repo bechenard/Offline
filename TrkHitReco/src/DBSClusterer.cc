@@ -1,5 +1,6 @@
 #include "Offline/TrkHitReco/inc/DBSClusterer.hh"
 #include "Offline/ConfigTools/inc/ConfigFileLookupPolicy.hh"
+#include "Offline/GeneralUtilities/inc/CombineTwoDPoints.hh"
 
 #include <algorithm>
 #include <vector>
@@ -12,7 +13,9 @@ namespace mu2e
     DBSminExpand_     (config.value().DBSminN()),
     deltaTime_        (config.value().hitDeltaTime()),
     deltaZ_           (config.value().hitDeltaZ()),
-    deltaXY2_         (config.value().hitDeltaXY()*config.value().hitDeltaXY()),
+    deltaR2_          (config.value().hitDeltaR()*config.value().hitDeltaR()),
+    deltaChi2_        (config.value().hitDeltaChi2()),
+    useChi2Dist_      (config.value().useChi2Dist()),
     minClusterHits_   (config.value().minClusterHits()),
     bkgmask_          (config.value().bkgmsk()),
     sigmask_          (config.value().sigmsk()),
@@ -140,9 +143,16 @@ namespace mu2e
       if (chcol[idx[j]].correctedTime() - time0 > deltaTime_) break;
       if (std::abs(chcol[idx[j]].pos().z()- z0) > deltaZ_)    continue;
 
-      float dist = (chcol[idx[j]].pos().x()-x0)*(chcol[idx[j]].pos().x()-x0) +
-                   (chcol[idx[j]].pos().y()-y0)*(chcol[idx[j]].pos().y()-y0);
-      if (dist > deltaXY2_) continue;
+      if (useChi2Dist_){
+       //Need to imnplement the chi2 distance between points
+       //float chi2 = XXXXXXXXX
+       //if (chi2 > deltaChi2_) continue;
+      } else {
+        //use regular Euclidian distance between points
+        float dist = (chcol[idx[j]].pos().x()-x0)*(chcol[idx[j]].pos().x()-x0) +
+                     (chcol[idx[j]].pos().y()-y0)*(chcol[idx[j]].pos().y()-y0);
+        if (dist > deltaR2_) continue;
+      }
 
       neighbors.emplace_back(j);
       nNeighbors += chcol[idx[j]].nStrawHits();
@@ -157,12 +167,14 @@ namespace mu2e
   // this is only used for diagnosis at this point
   float DBSClusterer::distance(const BkgCluster& cluster, const ComboHit& hit) const
   {
-    float psep_x = hit.pos().x()-cluster.pos().x();
-    float psep_y = hit.pos().y()-cluster.pos().y();
-    return sqrt(psep_x*psep_x+psep_y*psep_y);
-    // alterntively, could use the chi2 distance
-    //return std::sqrt(cluster.points().dChi2(TwoDPoint(hit.pos(),hit.uDir(),hit.uVar(),hit.vVar())))
-    //         - std::sqrt(cluster.points().chisquared());
+    if (useChi2Dist_){
+      //need to implement chi2 based cluster-hit distance
+      return 0;
+    } else {
+      float psep_x = hit.pos().x()-cluster.pos().x();
+      float psep_y = hit.pos().y()-cluster.pos().y();
+      return sqrt(psep_x*psep_x+psep_y*psep_y);
+    }
   }
 
 

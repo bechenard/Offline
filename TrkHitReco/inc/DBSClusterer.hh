@@ -25,7 +25,9 @@ namespace mu2e {
         fhicl::Atom<unsigned>         DBSminN{          Name("DBSminExpand"),     Comment("Min number neighbors for DBScan algo") };
         fhicl::Atom<float>            hitDeltaTime{     Name("DeltaTime"),        Comment("Max time difference between hits") };
         fhicl::Atom<float>            hitDeltaZ{        Name("DeltaZ"),           Comment("Max Z difference between hits") };
-        fhicl::Atom<float>            hitDeltaXY{       Name("DeltaXY"),          Comment("Max XY difference between hits") };
+        fhicl::Atom<float>            hitDeltaR{        Name("DeltaR"),           Comment("Max R difference between hits") };
+        fhicl::Atom<float>            hitDeltaChi2{     Name("DeltaChi2"),        Comment("Max Chi2 difference between hits") };
+        fhicl::Atom<bool>             useChi2Dist{      Name("UseChi2Dist"),      Comment("Use chi2 distance measure between hits") };
         fhicl::Atom<unsigned>         minClusterHits{   Name("MinClusterHits"),   Comment("Min number hits in cluster") };
         fhicl::Sequence<std::string>  bkgmsk{           Name("BackgroundMask"),   Comment("Bkg hit selection mask") };
         fhicl::Sequence<std::string>  sigmsk{           Name("SignalMask"),       Comment("Signal hit selection mask") };
@@ -52,7 +54,9 @@ namespace mu2e {
       unsigned                DBSminExpand_;
       float                   deltaTime_;
       float                   deltaZ_;
-      float                   deltaXY2_;
+      float                   deltaR2_;
+      float                   deltaChi2_;
+      bool                    useChi2Dist_;
       unsigned                minClusterHits_;
       StrawHitFlag            bkgmask_;
       StrawHitFlag            sigmask_;
