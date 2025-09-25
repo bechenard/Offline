@@ -3,6 +3,7 @@ BEGIN_PROLOG
 # Normal reco seqence module: this produces a hit for every digi, and uses
 # flags to keep track of which hits to use
 # Reconstruct hits: this produces StrawHits and ComboHits
+
 TrkHitReco :{
    # flag hits from low-energy electrons (Compton electrons, delta rays, ...)
    # First, configure the clusters
@@ -13,7 +14,7 @@ TrkHitReco :{
       DeltaZ          : 800
       DeltaR          : 50
       DeltaChi2       : 50
-      UseChi2Cut      : true
+      UseChi2Dist     : false
       MinClusterHits  : 1
       TestFlag        : false
       BackgroundMask  : []
@@ -159,11 +160,10 @@ TrkHitReco : {
       TNTClustering        : {@table::TrkHitReco.TNTClusterer}
       Chi2Clustering       : {@table::TrkHitReco.Chi2Clusterer}
       DBSClustering        : {@table::TrkHitReco.DBSClusterer}
-      ClusterPositionError : 10
       FilterHits           : false
       BackgroundMask       : ["Background"]
       OutputLevel          : "uniquepanel"
-      SaveBkgClusters      : true
+      SaveBkgClusters      : false
       KerasQuality         : 0.5
       DebugLevel           : 0
    }

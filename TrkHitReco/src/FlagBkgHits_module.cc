@@ -35,7 +35,6 @@ namespace mu2e
         using Comment = fhicl::Comment;
 
         fhicl::Atom<art::InputTag>                    comboHitCollection{   Name("ComboHitCollection"),   Comment("ComboHit collection name") };
-        fhicl::Atom<float>                            clusterPositionError{ Name("ClusterPositionError"), Comment("Cluster poisiton error") };
         fhicl::Atom<int>                              clusterAlgorithm{     Name("ClusterAlgorithm"),     Comment("Clusterer algorithm") };
         fhicl::Atom<bool>                             filterHits{           Name("FilterHits"),           Comment("Produce filtered ComboHit collection")  };
         fhicl::Sequence<std::string>                  backgroundMask{       Name("BackgroundMask"),       Comment("Bkg hit selection mask") };
@@ -60,7 +59,6 @@ namespace mu2e
       StrawHitFlag                                bkgmsk_;
       StrawIdMask::Level                          level_;
       std::unique_ptr<BkgClusterer>               clusterer_;
-      float                                       cperr2_;
       int const                                   debug_;
       float                                       kerasQ_;
       int                                         iev_;
@@ -89,8 +87,6 @@ namespace mu2e
         produces<BkgClusterHitCollection>();
         produces<BkgClusterCollection>();
       }
-      float cperr = config().clusterPositionError();
-      cperr2_ = cperr*cperr;
 
       clusterer ctype = static_cast<clusterer>(config().clusterAlgorithm());
       switch ( ctype )

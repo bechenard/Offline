@@ -4,16 +4,19 @@
 #include "Offline/TrkHitReco/fcl/prolog.fcl"
 BEGIN_PROLOG
 # Diagnostic modules
-
-
 BD : {
   module_type : BkgDiag
-  StrawDigiMCCollection : "compressDigiMCs"
-  ComboHitCollection : "makeSTH"
-  BkgClusterCollection:"FlagBkgHits"
-  BkgClusterHitCollection:"FlagBkgHits"
-  MCPrimary : compressDigiMCs
-  ExpectedCHLevel : "uniquepanel"
+  StrawDigiMCCollection   : "compressDigiMCs"
+  ComboHitCollection      : "makePH"
+  BkgClusterCollection    : "flagPH"
+  BkgClusterHitCollection : "flagPH"
+  ExpectedCHLevel         : "uniquepanel"
+  MCPrimary               : compressDigiMCs
+  MaxTimeDifference       : 50
+  MaxRhoDifference        : 50
+  MapSimAncestor          : true
+  MCDiag                  : false
+  BkgHitDiag              : false
 }
 
 TRD : {
