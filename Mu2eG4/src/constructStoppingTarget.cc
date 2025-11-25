@@ -75,39 +75,13 @@ namespace mu2e {
     Mu2eG4Helper    & _helper = *(art::ServiceHandle<Mu2eG4Helper>());
     AntiLeakRegistry & reg = _helper.antiLeakRegistry();
 
-    //get the proton absorber elements to prevent overlaps
-    GeomHandle<MECOStyleProtonAbsorber> pabs;
-    bool overlapPabs = false;
-    double cylinderRadius = target->cylinderRadius();
-    double rAtZClosest, opaZCenter, opaR1, opaR2, opaHL, stZCenter, zclosest;
-    if(pabs->isAvailable(2)) { //there is the OPA in DS2
-      opaR1 = pabs->part(2).innerRadiusAtStart();
-      opaR2 = pabs->part(2).innerRadiusAtEnd();
-      if(!(cylinderRadius < opaR1 && cylinderRadius < opaR2)) { //could overlap
-        if(cylinderRadius > opaR1 && cylinderRadius > opaR2) {
-          throw cet::exception("GEOM") << "constructStoppingTarget::" << __func__
-                                       << ": Stopping target mother overlaps with OPA!\n";
-        }
-        //could overlap, so check if it does in this z range
-        opaZCenter = CLHEP::mm * pabs->part(2).center().z();
-        opaHL = pabs->part(2).halfLength();
-        stZCenter = target->centerInMu2e().z();
-        int side = (opaR1 <= opaR2) ? 1 : -1; //check which way the cone opens
-        zclosest = stZCenter - side*target->cylinderLength()/2.;
-        //make sure closest point is within OPA region
-        if(zclosest > opaZCenter + opaHL) zclosest = opaZCenter+opaHL;
-        else if(zclosest < opaZCenter - opaHL) zclosest = opaZCenter-opaHL;
-        rAtZClosest = opaR1 + (opaR2-opaR1)*(zclosest - (opaZCenter-opaHL))/(2.*opaHL); //linear radius change in z
-        if(rAtZClosest < cylinderRadius + 0.001) overlapPabs = true; //require a small buffer
-      } //end possible radius overlap check
-    } //end OPA is available check
 
     TubsParams targetMotherParams(0., target->cylinderRadius(), target->cylinderLength()/2.);
 
     VolumeInfo targetInfo;
     std::string targetMotherName = "StoppingTargetMother";
-    if(!overlapPabs) {
-      targetInfo = nestTubs(targetMotherName,
+
+    targetInfo = nestTubs(targetMotherName,
                             targetMotherParams,
                             findMaterialOrThrow(target->fillMaterial()),
                             0,
@@ -121,29 +95,6 @@ namespace mu2e {
                             placePV,
                             doSurfaceCheck
                             );
-    } else { //if going to overlap, make a conic section mother volume
-      //simply follow the OPA with a small gap
-      double motherParams[7] = {0., rAtZClosest-0.001,
-                                0., rAtZClosest + abs(opaR2 - opaR1)/(2.*opaHL)*target->cylinderLength() - 0.001,
-                                target->cylinderLength()/2.,
-                                0.0, 360.0*CLHEP::degree};
-      targetInfo = nestCons(targetMotherName,
-                            motherParams,
-                            findMaterialOrThrow(target->fillMaterial()),
-                            0,
-                            target->centerInMu2e() - parent.centerInMu2e() + relPosFake,
-                            parent,
-                            0,
-                            false/*visible*/,
-                            G4Colour::Black(),
-                            false/*solid*/,
-                            forceAuxEdgeVisible,
-                            placePV,
-                            doSurfaceCheck
-                            );
-
-    }
-
     // now create the individual target foils
 
     G4VPhysicalVolume* pv;
@@ -206,116 +157,6 @@ namespace mu2e {
           foilInfo.logical->SetVisAttributes(visAtt);
         }
       }// target foils
-
-    for (int itf=0; itf<target->nSupportStructures(); ++itf) {
-        TargetFoilSupportStructure supportStructure=target->supportStructure(itf);
-        //TargetFoil foil=target->foil(itf);
-
-        //VolumeInfo foilInfo;
-        VolumeInfo supportStructureInfo;
-
-        G4Material* supportStructureMaterial = findMaterialOrThrow(supportStructure.material());
-
-        std::ostringstream os;
-        os << std::setfill('0') << std::setw(2) << itf;
-        supportStructureInfo.name = "FoilSupportStructure_" + os.str();
-
-        if ( verbosity > 0 )  std::cout << __func__ << " " << supportStructureInfo.name
-                                          << std::endl;
-
-        supportStructureInfo.solid = new G4Tubs(supportStructureInfo.name
-                                    ,0
-                                    ,supportStructure.radius()
-                                    ,supportStructure.length()/2. // G4Tubs useses half-lengths as this parameter
-                                    ,0.
-                                    ,CLHEP::twopi
-                                    );
-
-        supportStructureInfo.logical = new G4LogicalVolume( supportStructureInfo.solid
-                                                , supportStructureMaterial
-                                                , supportStructureInfo.name
-                                                );
-
-
-        if ( verbosity > 1 ) std::cout << "supportStructure.support_id() = "
-                                       << supportStructure.support_id()
-                                       << "    target->nSupportStructures() = "
-                                       << target->nSupportStructures()
-                                       << "     target->nFoils() = "
-                                       << target->nFoils()
-                                       << "     supportStructure.length() = "
-                                       << supportStructure.length()
-                                       << std::endl;
-
-        // rotation matrices to rotate the orientation of the
-        // supporting wires. First rotate into xy-plane by 90deg
-        // rotation around y-axis, then rotate within xy-plane by
-        // appropiate rotation around z-axis
-
-        CLHEP::HepRotationY secRy(-M_PI/2.);
-        CLHEP::HepRotationZ secRz( -supportStructure.support_id() * 360.*CLHEP::deg /
-                                   (target->nSupportStructures()/target->nFoils())
-                                   - 90.*CLHEP::deg - supportStructure.angleOffset()*CLHEP::deg);
-        G4RotationMatrix* supportStructure_rotMatrix = reg.add(G4RotationMatrix(secRy*secRz));
-
-        if ( verbosity > 1 ) std::cout << "supportStructure_rotMatrix = "
-                                       << *supportStructure_rotMatrix << std::endl;
-
-        // vector where to place to support tube
-        // first find target center
-        G4ThreeVector supportStructureOffset(supportStructure.centerInMu2e() - targetInfo.centerInMu2e() + relPosFake);
-
-        if ( verbosity > 1 ) std::cout << supportStructureInfo.name << " "
-                                  << itf
-                                  << " centerInMu2e="
-                                  << supportStructure.centerInMu2e()
-                                  << ", offset="
-                                  << supportStructureOffset
-                                  << std::endl;
-
-        if ( verbosity > 1 ) std::cout << __func__ << " "
-                                       << supportStructureInfo.name
-                                       <<  std::endl;
-
-        G4ThreeVector
-          vector_supportStructure_Orientation( (supportStructure.length()/2.+supportStructure.foil_outer_radius()) *
-                                               std::cos(supportStructure.support_id() * 360.*CLHEP::deg /
-                                                        (target->nSupportStructures()/target->nFoils()) +
-                                                        90.*CLHEP::deg +
-                                                        supportStructure.angleOffset()*CLHEP::deg),
-                                               (supportStructure.length()/2.+supportStructure.foil_outer_radius()) *
-                                               std::sin(supportStructure.support_id() * 360.*CLHEP::deg /
-                                                        (target->nSupportStructures()/target->nFoils()) +
-                                                        90.*CLHEP::deg + supportStructure.angleOffset()*CLHEP::deg), 0);
-
-        if ( verbosity > 1 ) std::cout << "vector_supportStructure_Orientation = "
-                                       << vector_supportStructure_Orientation << std::endl;
-
-        supportStructureOffset += vector_supportStructure_Orientation; // second add vector to support wire tube center
-
-        if ( verbosity > 1 ) std::cout << "supportStructureOffset += vector_supportStructure_Orientation = "
-                                       << supportStructureOffset << std::endl;
-
-        pv = new G4PVPlacement( supportStructure_rotMatrix,
-                                supportStructureOffset,
-                                supportStructureInfo.logical,
-                                supportStructureInfo.name,
-                                targetInfo.logical,
-                                0,
-                                itf,
-                                false);
-
-        doSurfaceCheck && checkForOverlaps( pv, config, verbosity>0);
-
-        if (!stoppingTargetIsVisible) {
-          supportStructureInfo.logical->SetVisAttributes(G4VisAttributes::GetInvisible());
-        } else {
-          G4VisAttributes* visAtt = reg.add(G4VisAttributes(true, G4Colour::Blue()));
-          visAtt->SetForceAuxEdgeVisible(config.getBool("g4.forceAuxEdgeVisible",false));
-          visAtt->SetForceSolid(stoppingTargetIsSolid);
-          supportStructureInfo.logical->SetVisAttributes(visAtt);
-        }
-      }// target foils support structures
 
     return targetInfo;
   }

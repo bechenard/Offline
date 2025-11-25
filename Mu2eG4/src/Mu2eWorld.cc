@@ -223,7 +223,7 @@ namespace mu2e {
     constructTS(hallInfo, _config);
     VolumeInfo trackerInfo = constructTracker();
     VolumeInfo targetInfo  = constructTarget();
-    constructProtonAbsorber(_config);
+    //constructProtonAbsorber(_config);
     VolumeInfo calorimeterInfo = constructCal();
 
     // This is just placeholder for now - and might be misnamed.
@@ -374,7 +374,7 @@ namespace mu2e {
       theDS3 = "garageFakeDS3Vacuum";
       theDS2 = "garageFakeDS2Vacuum";
     }
-    VolumeInfo const & detSolUpstreamVacInfo   = ( _config.getBool("isDumbbell",false) ) ? _helper->locateVolInfo(theDS3) : _helper->locateVolInfo(theDS2);//DS3Vacuum to move the targets
+    VolumeInfo const & detSolUpstreamVacInfo   = _helper->locateVolInfo(theDS3);
 
     if ( _verbosityLevel > 0) {
       G4cout << __func__ << "detSolUpstreamVacInfo.centerInWorld.z()=" << detSolUpstreamVacInfo.centerInWorld.z() << G4endl;
@@ -1121,6 +1121,7 @@ namespace mu2e {
 
 
     /************************** ProtonAbsorber **************************/
+/*
     if(sdHelper_->enabled(StepInstanceName::protonabsorber)) {
       Mu2eG4SensitiveDetector* paSD =
         new Mu2eG4SensitiveDetector( SensitiveDetectorName::ProtonAbsorber(),  _config );
@@ -1142,7 +1143,7 @@ namespace mu2e {
 
       }//for
     }//if protonabsorber
-
+*/
 
     /************************** PSVacuum **************************/
     //done

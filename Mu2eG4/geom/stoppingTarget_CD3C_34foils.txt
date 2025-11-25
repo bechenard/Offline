@@ -2,7 +2,7 @@
 double dummyStoppingTarget.rIn        =     0.;
 double dummyStoppingTarget.rOut       =   100.;
 double dummyStoppingTarget.halfLength =   400.;
-double dummyStoppingTarget.z0         =  5900.;
+double dummyStoppingTarget.z0         =  12000.;
 string dummyStoppingTarget.material   = "WAGVacuum";
 
 // int   stoppingTarget.verbosity = 2;
@@ -15,7 +15,7 @@ string dummyStoppingTarget.material   = "WAGVacuum";
 string         stoppingTarget.fillMaterial    = "DSVacuum";
 
 // All dimensions in mm
-double stoppingTarget.z0InMu2e       = 5871;    // 12000 - 6129
+double stoppingTarget.z0InMu2e       = 12240;
 double stoppingTarget.deltaZ         = 24.242424;
 bool   stoppingTarget.visible        = true;
 bool   stoppingTarget.solid          = false;

@@ -90,17 +90,20 @@ namespace mu2e {
     G4ThreeVector posDiskMother      = G4ThreeVector(posDS3.x(), 0, mother_zCenter);
     G4ThreeVector posDiskMotherInDS  = posDiskMother - posDS3;
 
-
     // Disk and FEB mother volumes
     VolumeInfo caloMotherInfo("CalorimeterMother");
     VolumeInfo caloDiskInfo("CaloDiskMother");
     VolumeInfo caloFEBInfo("CaloFEBMother");
 
+    //Rotate the calo 180 degrees
+    G4RotationMatrix* rotMother      = reg.add(new G4RotationMatrix(CLHEP::HepRotation::IDENTITY));
+    rotMother->rotateY(CLHEP::pi);
+
     caloDiskInfo.solid           = new G4Tubs(caloDiskInfo.name, caloDiskRadiusIn,  caloDiskRadiusOut, mother_zlength/2.0, 0.0, CLHEP::twopi);
     caloFEBInfo.solid            = new G4Tubs(caloFEBInfo.name,  caloDiskRadiusOut, caloFEBRadiusOut,  mother_zlength/2.0, FEBPhiMinMax[0], FEBPhiMinMax[1]-FEBPhiMinMax[0]);
     caloMotherInfo.solid         = new G4UnionSolid(caloMotherInfo.name, caloDiskInfo.solid, caloFEBInfo.solid);
     caloMotherInfo.logical       = caloLogical(caloMotherInfo, vacuumMaterial, 0, G4Color::Black(), 0, 0);
-    caloMotherInfo.physical      = caloPlacement(caloMotherInfo, mother, 0, posDiskMotherInDS, false, 0, config, doSurfaceCheck, verbosity);
+    caloMotherInfo.physical      = caloPlacement(caloMotherInfo, mother, rotMother, posDiskMotherInDS, false, 0, config, doSurfaceCheck, verbosity);
 
     helper.addVolInfo(caloFEBInfo);
     helper.addVolInfo(caloDiskInfo);

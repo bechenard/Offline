@@ -104,6 +104,14 @@ bool   vd.solid          = false;
 double building.dsArea.hatchblock.E.offsetFromFloorSurface.y = 6400.80;
 double building.dsArea.hatchblock.E.yHalfThickness           = 457.20;
 
+
+//---------------------------------------
+// Geant4 internal scorers
+//---------------------------------------
+#include "Offline/Mu2eG4/geom/Scorer_v01.txt"
+
+
+
 //
 //
 // End notes:

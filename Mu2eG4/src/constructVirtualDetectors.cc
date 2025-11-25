@@ -262,7 +262,7 @@ namespace mu2e {
     /*************************************************/
     /* new virtual detector**************************/
 
-
+/*
     if ( !_config.getBool("isDumbbell",false) ){
       double Ravr = ds->rIn1();
 
@@ -340,7 +340,7 @@ namespace mu2e {
         }
       }
     }
-
+*/
 
     /*****************end of new virtual detector************************/
 
@@ -360,32 +360,17 @@ namespace mu2e {
         Ravr = _config.getDouble("TSdA.rFactorForVDs");
       }
 
-      bool opaflag = false;
-      double opaz0, opaz1, opari0, opari1;
-      if ( _config.getBool("hasProtonAbsorber", true) ) {
-        GeomHandle<MECOStyleProtonAbsorber> pageom;
-        if ( pageom->isAvailable(ProtonAbsorberId::opabs1) ) {
-          opaflag = true;
-          MECOStyleProtonAbsorberPart opa = pageom->part(2);
-          opaz0 = opa.center().z()-opa.halfLength();
-          opaz1 = opa.center().z()+opa.halfLength();
-          opari0 = opa.innerRadiusAtStart();
-          opari1 = opa.innerRadiusAtEnd();
-        }
-      }
-
       for( int vdId=VirtualDetectorId::ST_In;
            vdId<=VirtualDetectorId::ST_Out;
-           ++vdId) if( vdg->exist(vdId) ) {
+           ++vdId)
+       if( vdg->exist(vdId) ) {
 
           if ( verbosityLevel > 0) {
             cout << __func__ << " constructing " << VirtualDetector::volumeName(vdId)  << endl;
           }
 
           double zvd = vdg->getGlobal(vdId).z();
-          if (opaflag) {
-            Ravr = (opari1 - opari0)/(opaz1 - opaz0) * (zvd - opaz0) + opari0;
-          }
+
           double rvd = Ravr - 5.0;
 
           if ( verbosityLevel > 0) {
@@ -395,11 +380,8 @@ namespace mu2e {
 
           TubsParams vdParamsTarget(0.,rvd,vdHalfLength);
           std::string theDS3("DS3Vacuum");
-          if ( _config.getBool("inGaragePosition",false) ) theDS3 = "garageFakeDS3Vacuum";
 
-          VolumeInfo const & parent = ( _config.getBool("isDumbbell",false) ) ?
-            _helper->locateVolInfo(theDS3) :
-            _helper->locateVolInfo("DS2Vacuum"); //DS3Vacuum to move the targets
+          VolumeInfo const & parent  = _helper->locateVolInfo(theDS3) ;
 
           if (verbosityLevel >0) {
             cout << __func__ << " " << VirtualDetector::volumeName(vdId) << " Z offset in Mu2e    : " <<

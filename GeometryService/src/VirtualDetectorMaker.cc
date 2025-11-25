@@ -177,13 +177,15 @@ namespace mu2e {
       GeomHandle<DetectorSolenoid> ds;
 
       const CLHEP::Hep3Vector ds2centerInMu2e(ds->position().x(), ds->position().y(), ds->vac_zLocDs23Split() - ds->vac_halfLengthDs2());
-      const Hep3Vector targetOffset(target->centerInMu2e() - ds2centerInMu2e);
+      const CLHEP::Hep3Vector ds3centerInMu2e(ds->position().x(), ds->position().y(), 0);
+      const Hep3Vector targetOffset(target->centerInMu2e() - ds3centerInMu2e);
+
       Hep3Vector shift(0., 0., vdHL + target->cylinderLength()/2);
 
       vd->addVirtualDetector( VirtualDetectorId::ST_In,
-                               ds2centerInMu2e, 0, targetOffset-shift);
+                               ds3centerInMu2e, 0, targetOffset-shift);
       vd->addVirtualDetector( VirtualDetectorId::ST_Out,
-                               ds2centerInMu2e, 0, targetOffset+shift);
+                               ds3centerInMu2e, 0, targetOffset+shift);
 
 
       /*******new virtual detector for STM Upstream halfway between coll5Out and STIn   ****/
