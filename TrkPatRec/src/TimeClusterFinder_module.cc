@@ -41,6 +41,15 @@
 #include <utility>
 using namespace std;
 using namespace boost::accumulators;
+#include "TTree.h"
+#include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
+#include "Offline/MCDataProducts/inc/MCRelationship.hh"
+#include "Offline/MCDataProducts/inc/SimParticle.hh"
+#include "Offline/GeometryService/inc/GeomHandle.hh"
+#include "Offline/GeometryService/inc/GeometryService.hh"
+#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
+#include "Offline/CalorimeterGeom/inc/DiskCalorimeter.hh"
+#include "Offline/DataProducts/inc/CaloSiPMId.hh"
 
 namespace {
 
@@ -101,6 +110,7 @@ namespace mu2e {
         fhicl::Atom<int>                        npeak                  {Name("PeakWidth"),              Comment("Time Peak Width") };
         fhicl::Atom<int>                        printfreq              {Name("printFrequency"),         Comment("Print frequency"), 100 };
         fhicl::Atom<int>                        debugLevel             {Name("debugLevel"),             Comment("Debut Level"), 0 };
+        fhicl::Atom<bool>                       saveData               {Name("saveData"),            Comment(""),false };
       };
 
       explicit TimeClusterFinder(const art::EDProducer::Table<Config>& config);
@@ -141,9 +151,21 @@ namespace mu2e {
       int                           _debug;
       TH1F                          _timespec;
       TimeCluMVA                    _pmva; // input variables to TMVA for cluster cleaning
+      bool                          _saveData;
 
+      TTree*  trkdiag_;
+      Int_t   iev_;
+      Int_t   Nch_,chSel_[8192],chNhit_[8192],chPdg_[8192],chCrCode_[8192],chSimId_[8192],chUId_[8192];
+      Float_t chTime_[8192], chPhi_[8192],chRad_[8192],chX_[8192],chY_[8192],chZ_[8192],chDX_[8192],chDY_[8192],chDZ_[8192],chDQ_[8192];
+      Float_t chTerr_[8192],chWerr_[8192],chWDX_[8192],chWDY_[8192],chMomX_[8192],chMomY_[8192],chMomZ_[8192],chEdep_[8192];
+      Int_t   Ncal_;
+      Int_t   nhit1_,iclu1_[8192],hitIdx1_[8192];
+      Int_t   nhit2_,iclu2_[8192],hitIdx2_[8192];
+      Int_t   nhit3_,iclu3_[8192],hitIdx3_[8192];
+      Int_t   nclu2_;
+      Float_t calo2X_[8192],calo2Y_[8192],calo2Z_[8192],calo2T_[8192],calo2E_[8192];
 
-      void findClusters(TimeClusterCollection& tccol);
+      void findClusters(TimeClusterCollection& tccol,const Calorimeter& cal);
       void findCaloSeeds(TimeClusterCollection& tccol, art::Handle<CaloClusterCollection> const& ccH);
       void fillTimeSpectrum();
       void initCluster(TimeCluster& tc);
@@ -188,7 +210,8 @@ namespace mu2e {
     _recover      ( config().recover()),
     _npeak        ( config().npeak()),
     _printfreq    ( config().printfreq()),
-    _debug        ( config().debugLevel())
+    _debug        ( config().debugLevel()),
+    _saveData     ( config().saveData())
     {
       unsigned nbins = (unsigned)rint((_tmax-_tmin)/_tbin);
       _timespec = TH1F("timespec","time spectrum",nbins,_tmin,_tmax);
@@ -205,6 +228,47 @@ namespace mu2e {
       std::cout << "TimeClusterFinder Calo MVA : " << std::endl;
       _tcCaloMVA.showMVA();
     }
+    art::ServiceHandle<art::TFileService> tfs;
+    trkdiag_ = tfs->make<TTree>("tpcdiag","time and phi cluster diagnostics");
+
+    trkdiag_->Branch("iev",       &iev_,       "iev/I");
+    trkdiag_->Branch("Nch",       &Nch_,       "Nch/I");
+    trkdiag_->Branch("chSel",     &chSel_,     "chSel[Nch]/I");
+    trkdiag_->Branch("chNhit",    &chNhit_,    "chNhit[Nch]/I");
+    trkdiag_->Branch("chPdg",     &chPdg_,     "chPdg[Nch]/I");
+    trkdiag_->Branch("chCrCode",  &chCrCode_,  "chCrCode[Nch]/I");
+    trkdiag_->Branch("chSimId",   &chSimId_,   "chSimId[Nch]/I");
+    trkdiag_->Branch("chTime",    &chTime_,    "chTime[Nch]/F");
+    trkdiag_->Branch("chPhi",     &chPhi_,     "chPhi[Nch]/F");
+    trkdiag_->Branch("chRad",     &chRad_,     "chRad[Nch]/F");
+    trkdiag_->Branch("chX",       &chX_,       "chX[Nch]/F");
+    trkdiag_->Branch("chY",       &chY_,       "chY[Nch]/F");
+    trkdiag_->Branch("chZ",       &chZ_,       "chZ[Nch]/F");
+    trkdiag_->Branch("chDX",      &chDX_,      "chDX[Nch]/F");
+    trkdiag_->Branch("chDY",      &chDY_,      "chDY[Nch]/F");
+    trkdiag_->Branch("chDZ",      &chDZ_,      "chDZ[Nch]/F");
+    trkdiag_->Branch("chDQ",      &chDQ_,      "chDQ[Nch]/F");
+    trkdiag_->Branch("chMomX",    &chMomX_,    "chMomX[Nch]/F");
+    trkdiag_->Branch("chMomY",    &chMomY_,    "chMomY[Nch]/F");
+    trkdiag_->Branch("chMomZ",    &chMomZ_,    "chMomZ[Nch]/F");
+    trkdiag_->Branch("chEdep",    &chEdep_,    "chEdep[Nch]/F");
+    trkdiag_->Branch("chUId",     &chUId_,     "chUId[Nch]/I");
+    trkdiag_->Branch("chTerr",    &chTerr_,    "chTerr[Nch]/F");
+    trkdiag_->Branch("chWerr",    &chWerr_,    "chWerr[Nch]/F");
+    trkdiag_->Branch("chWDX",     &chWDX_,     "chWDX[Nch]/F");
+    trkdiag_->Branch("chWDY",     &chWDY_,     "chWDY[Nch]/F");
+    trkdiag_->Branch("nhit1",     &nhit1_,     "nhit1/I");
+    trkdiag_->Branch("hitIdx1",   &hitIdx1_,   "hitIdx1[nhit1]/I");
+    trkdiag_->Branch("iclu1",     &iclu1_,     "iclu1[nhit1]/I");
+    trkdiag_->Branch("nhit2",     &nhit2_,     "nhit2/I");
+    trkdiag_->Branch("hitIdx2",   &hitIdx2_,   "hitIdx2[nhit2]/I");
+    trkdiag_->Branch("iclu2",     &iclu2_,     "iclu2[nhit2]/I");
+    trkdiag_->Branch("nclu2",     &nclu2_,     "nclu2/I");
+    trkdiag_->Branch("calo2X",    &calo2X_,    "calo2X[nclu2]/F");
+    trkdiag_->Branch("calo2Y",    &calo2Y_,    "calo2Y[nclu2]/F");
+    trkdiag_->Branch("calo2Z",    &calo2Z_,    "calo2Z[nclu2]/F");
+    trkdiag_->Branch("calo2T",    &calo2T_,    "calo2T[nclu2]/F");
+    trkdiag_->Branch("calo2E",    &calo2E_,    "calo2E[nclu2]/F");
   }
 
 
@@ -223,11 +287,57 @@ namespace mu2e {
       _cccol = ccH.product();
     }
 
+art::ServiceHandle<GeometryService> geom;
+if (!geom->hasElement<Calorimeter>() ) return;
+const Calorimeter& cal = *(GeomHandle<Calorimeter>());
+
+ art::InputTag  mcdigisTag_("compressDigiMCs");
+ auto const& mcdigis = event.getValidHandle<StrawDigiMCCollection>(mcdigisTag_);
+
+ iev_ = _iev;
+ nhit1_=nhit2_=nhit3_=0;
+
+ Nch_= _chcol->size();
+ for (unsigned ich=0; ich<_chcol->size();++ich)
+ {
+      int selFlag  = goodHit(_chcol->at(ich).flag()) ? 1 : 0;
+      chSel_[ich]  = selFlag;
+      chTime_[ich] = _chcol->at(ich).correctedTime();
+      chX_[ich]    = _chcol->at(ich).pos().x();
+      chY_[ich]    = _chcol->at(ich).pos().y();
+      chZ_[ich]    = _chcol->at(ich).pos().z();
+      chDX_[ich]   = _chcol->at(ich).hDir().x();
+      chDY_[ich]   = _chcol->at(ich).hDir().y();
+      chDZ_[ich]   = _chcol->at(ich).hDir().z();
+      chDQ_[ich]   = _chcol->at(ich).qual();
+      chRad_[ich]  = sqrt(_chcol->at(ich).pos().x()*_chcol->at(ich).pos().x()+_chcol->at(ich).pos().y()*_chcol->at(ich).pos().y());
+      chPhi_[ich]  = _chcol->at(ich).pos().phi();
+      chNhit_[ich] = _chcol->at(ich).nStrawHits();
+      chUId_[ich]  = _chcol->at(ich).strawId().uniquePanel();
+      chTerr_[ich] = _chcol->at(ich).posRes(StrawHitPosition::trans);
+      chWerr_[ich] = _chcol->at(ich).posRes(StrawHitPosition::wire);
+      chWDX_[ich]  = _chcol->at(ich).vDir().x();
+      chWDY_[ich]  = _chcol->at(ich).vDir().y();
+      chEdep_[ich] = _chcol->at(ich).energyDep();
+
+      std::vector<StrawDigiIndex> dids;
+      _chcol->fillStrawDigiIndices(ich,dids);
+      const StrawDigiMC& mcdigi        = mcdigis->at(dids[0]);// taking 1st digi: is there a better idea??
+      const art::Ptr<SimParticle>& spp = mcdigi.earlyStrawGasStep()->simParticle();
+      chPdg_[ich]    = spp->pdgId();
+      chCrCode_[ich] = spp->creationCode();
+      chSimId_[ich]  = spp->id().asInt();
+      chMomX_[ich]   = mcdigi.earlyStrawGasStep()->momentum().x();
+      chMomY_[ich]   = mcdigi.earlyStrawGasStep()->momentum().y();
+      chMomZ_[ich]   = mcdigi.earlyStrawGasStep()->momentum().z();
+}
+
     std::unique_ptr<TimeClusterCollection> tccol(new TimeClusterCollection);
     // If requested, use calo clusters to for time cluster seeds
     if (_usecc) findCaloSeeds(*tccol,ccH);
     // find all the hit clusters
-    findClusters(*tccol);
+    findClusters(*tccol,cal);
+if (_saveData) trkdiag_->Fill();
 
     if (_debug > 0) std::cout << "Found " << tccol->size() << " Time Clusters " << std::endl;
 
@@ -249,12 +359,26 @@ namespace mu2e {
 
 
   //--------------------------------------------------------------------------------------------------------------
-  void TimeClusterFinder::findClusters(TimeClusterCollection& tccol) {
+  void TimeClusterFinder::findClusters(TimeClusterCollection& tccol, const Calorimeter& cal) {
     // find seed from hits
     fillTimeSpectrum();
     findPeaks(tccol);
     // associate hits to seeds
     assignHits(tccol);
+int iclu1(0),ih1(0);
+for (const auto& tc : tccol)
+{
+   for (auto& ish : tc._strawHitIdxs)
+   {
+      iclu1_[ih1]    = iclu1;
+      hitIdx1_[ih1]  = ish;
+      ++ih1;
+   }
+   ++iclu1;
+}
+nhit1_=ih1;
+
+int iclu2(0),ih2(0);
     // loop over seeds and fill/refine information
     auto itc = tccol.begin();
     while(itc != tccol.end()){
@@ -266,12 +390,33 @@ namespace mu2e {
         if (_refine) refineCluster(tc);
         if (_recover && tc._nsh > 0) recoverHits(tc);
       }
+
+if (tc.nStrawHits() >_minnhits){
+for (auto& ish : tc._strawHitIdxs)
+{
+   iclu2_[ih2]    = iclu2;
+   hitIdx2_[ih2]  = ish;
+   ++ih2;
+}
+if (tc.caloCluster()){
+  calo2X_[iclu2] = tc.caloCluster()->cog3Vector().x();
+  calo2Y_[iclu2] = tc.caloCluster()->cog3Vector().y();
+  calo2Z_[iclu2] = cal.geomUtil().mu2eToTracker(cal.geomUtil().diskFFToMu2e(tc.caloCluster()->diskID(),tc.caloCluster()->cog3Vector())).z();
+  calo2E_[iclu2] = tc.caloCluster()->energyDep();
+  calo2T_[iclu2] = tc.caloCluster()->time();
+} else {
+  calo2X_[iclu2]=calo2Y_[iclu2]=calo2Z_[iclu2]=calo2E_[iclu2]=calo2T_[iclu2]=-999.9;
+}
+++iclu2;
+}
       if (tc.nStrawHits() < _minnhits) {
         itc = tccol.erase(itc);
       } else
         ++itc;
       //std::cout<<"Collection size final"<<tc._strawHitIdxs.size()<<std::endl;
     }
+nhit2_ = ih2;
+nclu2_ = iclu2;
     // debug test of histogram
     if (_debug > 2) {
       art::ServiceHandle<art::TFileService> tfs;

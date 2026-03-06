@@ -44,7 +44,7 @@ TrkHitReco :{
    Chi2Clusterer : {
       HitDistance      : 4
       SeedDistance     : 8
-      MinClusterHits   : 1
+      MinClusterHits   : 2
       MaxHitTimeDiff   : 30.0
       MaxCluIterations : 5
       MinActiveHits    : 3
@@ -152,8 +152,8 @@ TrkHitReco : {
    # Background hit flagging
    FlagBkgHits : {
       module_type          : FlagBkgHits
-      ComboHitCollection   : "makeSTH"
-      ClusterAlgorithm     : 3
+      ComboHitCollection   : "makeSTH"  # makePH
+      ClusterAlgorithm     : 2
       TNTClustering        : {@table::TrkHitReco.TNTClusterer}
       Chi2Clustering       : {@table::TrkHitReco.Chi2Clusterer}
       DBSClustering        : {@table::TrkHitReco.DBSClusterer}

@@ -31,7 +31,7 @@ TrkPatRec : { @table::TrkPatRec
       UseCaloClusterPosition : true
       CaloClusterWeight      : 10.0
       TestFlag               : true
-      CaloClusterMinE        : 50.0
+      CaloClusterMinE        : 10.0
       CaloClusterWeight      : 10.0
       T0Calculator           : {}
       DtMax                  : 25
@@ -184,6 +184,7 @@ TrkPatRec : { @table::TrkPatRec
          @table::TrkPatRec.TimeCalculator
          StrawHitBeta : 1.0
       }
+      saveData : true
    }
    TimeClusterFinderUe : {
       @table::TrkPatRec.TimeClusterFinder

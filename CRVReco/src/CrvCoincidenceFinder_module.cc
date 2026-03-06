@@ -268,10 +268,13 @@ namespace mu2e
     }
   }
 
+
   void CrvCoincidenceFinder::produce(art::Event& event)
   {
     std::unique_ptr<CrvCoincidenceClusterCollection> crvCoincidenceClusterCollection(new CrvCoincidenceClusterCollection);
 
+event.put(std::move(crvCoincidenceClusterCollection));
+return;
     GeomHandle<CosmicRayShield> CRS;
 
     art::Handle<CrvRecoPulseCollection> crvRecoPulseCollection;
