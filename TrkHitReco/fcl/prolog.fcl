@@ -3,6 +3,30 @@ BEGIN_PROLOG
 # Normal reco seqence module: this produces a hit for every digi, and uses
 # flags to keep track of which hits to use
 # Reconstruct hits: this produces StrawHits and ComboHits
+
+# Added Diagnosis module back
+TrkDiag : {
+  BD : {
+    module_type : BkgDiag
+    StrawDigiMCCollection   : "compressDigiMCs"
+    ComboHitCollection      : "makePH"
+    BkgClusterCollection    : "flagPH"
+    BkgClusterHitCollection : "flagPH"
+    ExpectedCHLevel         : "uniquepanel"
+    MCPrimary               : compressDigiMCs
+    MaxTimeDifference       : 50
+    MaxRhoDifference        : 50
+    MapSimAncestor          : true
+    MCDiag                  : false
+    BkgHitDiag              : false
+  }
+  analyzers : {
+    BD : @local::BD
+  }
+}
+
+
+
 TrkHitReco :{
    # flag hits from low-energy electrons (Compton electrons, delta rays, ...)
    # First, configure the clusters
