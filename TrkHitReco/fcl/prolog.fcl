@@ -14,15 +14,15 @@ TrkDiag : {
     BkgClusterHitCollection : "flagPH"
     ExpectedCHLevel         : "uniquepanel"
     MCPrimary               : compressDigiMCs
-    MaxTimeDifference       : 50
-    MaxRhoDifference        : 50
-    MapSimAncestor          : true
     MCDiag                  : false
-    BkgHitDiag              : false
   }
-  analyzers : {
-    BD : @local::BD
-  }
+}
+
+TrkDiag : {
+   @table::TrkDiag
+   analyzers : {
+     BD : { @table::TrkDiag.BD }
+   }
 }
 
 
