@@ -23,6 +23,9 @@
 #include <forward_list>
 #include <string>
 
+#include "TTree.h"
+#include "art_root_io/TFileService.h"
+
 namespace mu2e {
   class MergeHelices : public art::EDProducer {
     public:
@@ -59,6 +62,11 @@ namespace mu2e {
       void countHits(art::Event const& evt, HelixSeed const& h1, HelixSeed const& h2, unsigned& nh1, unsigned& nh2, unsigned& nover);
       unsigned countOverlaps(SHIV const& s1, SHIV const& s2);
       void findchisq(art::Event const& evt, HelixSeed const& h2, float& chixy, float& chizphi) const;
+
+      TTree*  rhfdiag_;
+      Int_t Ntrk_,iev_,nhits_[128];
+      Float_t time_[128],radius_[128],xc_[128],yc_[128],lambda_[128],phi0_[128];
+      std::vector<float> hitsx_,hitsy_;
   };
 
   MergeHelices::MergeHelices(const Parameters& config) : art::EDProducer{config},
@@ -76,6 +84,22 @@ namespace mu2e {
       consumesMany<HelixSeedCollection>    ();
       produces<HelixSeedCollection>    ();
       produces<TimeClusterCollection>    ();
+
+      art::ServiceHandle<art::TFileService> tfs;
+      rhfdiag_ = tfs->make<TTree>("rhfdiag","helix finder");
+
+      rhfdiag_->Branch("iev",       &iev_,       "iev/I");
+      rhfdiag_->Branch("Ntrk",      &Ntrk_,      "Ntrk/I");
+      rhfdiag_->Branch("time",      &time_,      "time[Ntrk]/F");
+      rhfdiag_->Branch("radius",    &radius_,    "radius[Ntrk]/F");
+      rhfdiag_->Branch("xc",        &xc_,        "xc[Ntrk]/F");
+      rhfdiag_->Branch("yx",        &yc_,        "yc[Ntrk]/F");
+      rhfdiag_->Branch("lambda",    &lambda_,    "lambda[Ntrk]/F");
+      rhfdiag_->Branch("phi0",      &phi0_,      "phi0[Ntrk]/F");
+      rhfdiag_->Branch("nhits",     &nhits_,     "nhits[Ntrk]/I");
+      rhfdiag_->Branch("hitsx",     &hitsx_);
+      rhfdiag_->Branch("hitsy",     &hitsy_);
+
     }
 
   void MergeHelices::produce(art::Event& event) {
@@ -114,6 +138,34 @@ namespace mu2e {
       if(jhel == hseeds.end())
         ihel++;
     }
+
+
+    // Add helix dump here
+
+    iev_ = event.id().event();
+    Ntrk_=0;
+    hitsx_.clear();
+    hitsy_.clear();
+
+    for (const auto& hseed : hseeds){
+      time_[Ntrk_]   = hseed->t0()._t0;
+      radius_[Ntrk_] = hseed->helix().radius();
+      xc_[Ntrk_]     = hseed->helix().centerx();
+      yc_[Ntrk_]     = hseed->helix().centery();
+      lambda_[Ntrk_] = hseed->helix().lambda();
+      phi0_[Ntrk_]   = hseed->helix().fz0();
+      nhits_[Ntrk_]  = hseed->hits().size();
+
+      for (const auto& ch : hseed->hits()) {
+        hitsx_.push_back(ch.pos().x());
+        hitsy_.push_back(ch.pos().y());
+      }
+      ++Ntrk_;
+    }
+
+    rhfdiag_->Fill();
+
+
     // now hseeds contains only pointers to unique and best helices: use them to
     // create the output, which must be deep-copy, including the time cluster
     for(auto ihel = hseeds.begin(); ihel != hseeds.end(); ihel++){
