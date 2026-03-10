@@ -10,7 +10,6 @@ CaloNNDiag : {
   caloClusterCollection  : CaloClusterMaker
   caloHitTruth           : CaloHitTruthMatch
   caloClusterTruth       : CaloClusterTruthMatch
-  minCluEnergy           : 0
 }
 
 CaloNNTrain: {
