@@ -117,7 +117,52 @@ TrkPatRec : { @table::TrkPatRec
          StrawDigiMCCollection : "compressDigiMCs"
       }
 
-      maxEDepAvg              : @local::TrkReco.HelixFinderParams.maxEDepAvg
+      maxEDepAvg              : 0
+      #@local::TrkReco.HelixFinderParams.maxEDepAvg
+   }
+
+   RobustMultiHelixFinder2 : {
+      module_type             : RobustMultiHelixFinder2
+      ComboHitCollection      : "flagPH"
+      TimeClusterCollection   : "TimeClusterFinderDe"
+      CaloClusterCollection   : "CaloClusterMaker"
+      Helicities              : [-1,1]
+      MaxEdepHit              : 0.0035
+      MinRadCircle            : 150
+      MaxRadCircle            : 350
+      MinDZCircle             : 200
+      MinDXY2Circle           : 1600
+      MaxDXY2Circle           : 1.6e6
+      MaxDRCircle             : 50
+      MaxChi2Circle           : 1.5
+      ResCRad                 : 0.02
+      ResCPerp                : 0.2
+      MaxDphi                 : 0.5
+      MaxDphiC                : 1.5
+      MinDZTrk                : 1500
+      SelHitRatio             : 0.7
+      MinDpdz                 : 0.002
+      MaxDpdz                 : 0.007
+      UseDist2                : false
+      MaxDist2Filter          : 4900
+      MaxDist2Recover         : 4900
+      MaxChi2Filter           : 1.5
+      MaxChi2Recover          : 2.0
+      MinStrawHits            : 15
+      MinnTotHits             : 25
+      CaloClusterMinE         : 10
+      CaloClusterWeight       : 10
+      MaxEDepAvg              : 0.0035
+      FitCircleStrategy       : "ChiSquared"
+      NMaxTrkIter             : 3
+      DiagLevel               : 0
+
+      DiagPlugin : {
+         tool_type             : "RobustMultiHelixFinderDiag"
+         MCDiag                : true
+         StrawDigiMCCollection : "compressDigiMCs"
+      }
+
    }
 
    # helix finding.  Search for both helicities
@@ -256,7 +301,7 @@ TrkPatRec : { @table::TrkPatRec
    }
 #  MPR
    MultiHelixFinderDe : {
-      @table::TrkPatRec.RobustMultiHelixFinder
+      @table::TrkPatRec.RobustMultiHelixFinder2
       TimeClusterCollection  : "TimeClusterFinderDe"
    }
    MultiHelixFinderUe : {
