@@ -326,7 +326,6 @@ CALLGRIND_STOP_INSTRUMENTATION;
       const auto& tc = tccol[index];
       findHelicesInTC(helcols,tcArtPtr,tc,chcol,cccol);
     }
-
     filterDuplicateHelices(*helcols[Helicity::poshel]);
     filterDuplicateHelices(*helcols[Helicity::neghel]);
 
@@ -390,10 +389,12 @@ dpdzFit(chcol,ph,h);
 fitCircleChi2(h,chcol, v,vv,vvv);
 fitCircleAlg(h,chcol,v,vv,vvv);
 initDpdzScan(chcol,ph,h,u);
+initDpdzTriplet(chcol,ph,h,u);
 }
 
 
-
+    //for (auto i : tc.hits()) std::cout<<i<<" ";
+    //std::cout<<"\n";
     //Calculate average time in tccol Hits and create CaloCluHit collection
     float taverage(0);
     for (auto& ich : tc.hits()) taverage += chcol[ich].correctedTime()/tc.hits().size();
@@ -443,7 +444,7 @@ chi2dXY = bestHelix.dzdt_;
 
 
       float Rcent  = sqrt(bestHelix.x_*bestHelix.x_+bestHelix.y_*bestHelix.y_);
-      float Fcent  = atan2f(bestHelix.y_,bestHelix.x_);
+      float Fcent  = polyAtan2(bestHelix.y_,bestHelix.x_);
       float t0err  = timeUncertainty(chcol,bestHelix);
 
       HelixSeed hseed;
@@ -479,14 +480,15 @@ chi2dXY = bestHelix.dzdt_;
     std::vector<float> phiCcol(chcol.size(),-999);
 
     //Find the best circle
-    for (size_t i=0; i+2<hits.size(); ++i){
+    size_t stride(1);
+    for (size_t i=0; i+2<hits.size(); i+=stride){
       const auto& chi  = chcol[hits[i]];
       float rad2x1y1   = chi.pos().x()*chi.pos().x()+chi.pos().y()*chi.pos().y();
       float x1         = chi.pos().x();
       float y1         = chi.pos().y();
       if (chi.energyDep() > maxEdepHit_) continue;
 
-      for (size_t j=i+1; j+1<hits.size(); ++j){
+      for (size_t j=i+1; j<hits.size(); j+=stride){
         const auto& chj    = chcol[hits[j]];
         float rad2x2y2     = chj.pos().x()*chj.pos().x()+chj.pos().y()*chj.pos().y();
         float x2           = chj.pos().x()-chi.pos().x();
@@ -496,7 +498,7 @@ chi2dXY = bestHelix.dzdt_;
         if (chj.pos().z()-chi.pos().z() < minDZCircle_) continue;
         if (x12x12y12y12 < minDXY2Circle_ || x12x12y12y12 > maxDXY2Circle_) continue;
 
-        for (size_t k=j+1; k<hits.size(); ++k){
+        for (size_t k=j+1; k<hits.size();k+=stride){
           const auto& chk    = chcol[hits[k]];
           float rad2x3y3     = chk.pos().x()*chk.pos().x()+chk.pos().y()*chk.pos().y();
           float x3           = chk.pos().x()-chi.pos().x();
@@ -560,7 +562,7 @@ chi2dXY = bestHelix.dzdt_;
 
 
           // add the calorimeter here, based on radius only
-          double caloDR(100);
+          double caloDR(50);
           for (size_t icalo=0;icalo<caloHits.size();++icalo) {
             const auto& ccalo = caloHits[icalo];
             double dr = fabs(sqrtf((ccalo.x_ - centerX)*(ccalo.x_ - centerX) + (ccalo.y_ - centerY)*(ccalo.y_ - centerY)) - radius);
@@ -572,18 +574,18 @@ chi2dXY = bestHelix.dzdt_;
           }
 
           if (helix.nStrawHits_ < minStrawHits_) continue;
-          if (helix.nhits() < minnTotHits_ || helix.nhits() < bestHelix.nhits()) continue;
+          //if (helix.nhits() < minnTotHits_ || helix.nhits() < bestHelix.nhits()) continue;
           auto nshCircle = helix.nStrawHits_;
 
 
 
 
           //Estimate dp/dz and remove incompatible hits
-          for (auto ich : helix.hits_) phiCcol[ich] = atan2f(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
+          for (auto ich : helix.hits_) phiCcol[ich] = polyAtan2(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
 
           std::vector<StrawHitIndex> hitsScan{hits[i], hits[j], hits[k]};
-          //initDpdzScan(chcol, phiCcol, helix, hitsScan);
-          initDpdzTriplet(chcol, phiCcol, helix, hitsScan);
+          initDpdzScan(chcol, phiCcol, helix, hitsScan);
+          //initDpdzTriplet(chcol, phiCcol, helix, hitsScan);
           if (fabs(helix.dpdz_) < minDpdz_ || fabs(helix.dpdz_) > maxDpdz_) continue;
 
           cleanDpdzHits(chcol,phiCcol,helix);
@@ -595,7 +597,7 @@ chi2dXY = bestHelix.dzdt_;
 
           //-- Perform full dp/dz fit
           //fitCircle(chcol,helix);
-          //for (auto ich : helix.hits_) phiCcol[ich] = atan2f(chcol[ich].y - helix.y_, chcol[ich].x - helix.x_);
+          //for (auto ich : helix.hits_) phiCcol[ich] = polyAtan2(chcol[ich].y - helix.y_, chcol[ich].x - helix.x_);
           //dpdzFit(chcol,phiCcol, helix);
 
 
@@ -652,7 +654,7 @@ chi2dXY = bestHelix.dzdt_;
           refineXY(chcol,phiCcol,helix);
           //try this to go faster
           //fitCircle(chcol,helix);
-          //for (auto ich : helix.hits_) phiCcol[ich] = atan2f(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
+          //for (auto ich : helix.hits_) phiCcol[ich] = polyAtan2(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
           //dpdzFit(chcol,phiCcol,helix);
 
           if (fabs(helix.dpdz_) < minDpdz_ || fabs(helix.dpdz_) > maxDpdz_) continue;
@@ -862,7 +864,7 @@ chi2dXY = bestHelix.dzdt_;
     float cdd    = (dx*ch.vDir().x()+dy*ch.vDir().y())/dnorm;
     float cpd    = (-dy*ch.vDir().x()+dx*ch.vDir().y())/dnorm;
 
-    float phiAtZ = atan2f(ch.pos().y()-centerY,ch.pos().x()-centerX);
+    float phiAtZ = polyAtan2(ch.pos().y()-centerY,ch.pos().x()-centerX);
     float dhx    = ch.pos().x() - (centerX + radius*cos(phiAtZ));
     float dhy    = ch.pos().y() - (centerY + radius*sin(phiAtZ));
     float dtrans = fabs(-ch.vDir().y()*dhx + ch.vDir().x()*dhy);
@@ -928,9 +930,9 @@ chi2dXY = bestHelix.dzdt_;
     float zi   = chcol[i].pos().z();
     float zj   = chcol[j].pos().z();
     float zk   = chcol[k].pos().z();
-    float phii = atan2f(chcol[i].pos().y()-centerY,chcol[i].pos().x()-centerX);
-    float phij = atan2f(chcol[j].pos().y()-centerY,chcol[j].pos().x()-centerX);
-    float phik = atan2f(chcol[k].pos().y()-centerY,chcol[k].pos().x()-centerX);
+    float phii = polyAtan2(chcol[i].pos().y()-centerY,chcol[i].pos().x()-centerX);
+    float phij = polyAtan2(chcol[j].pos().y()-centerY,chcol[j].pos().x()-centerX);
+    float phik = polyAtan2(chcol[k].pos().y()-centerY,chcol[k].pos().x()-centerX);
     int ilmax  = int((zj-zi)*maxDpdz_/6.2831 - (phij-phii)/6.2831);
     int ilmin  = int((zi-zj)*maxDpdz_/6.2831 - (phij-phii)/6.2831);
 
@@ -1225,7 +1227,7 @@ chi2dXY = bestHelix.dzdt_;
        thelix.r_ = radius;
 
 
-       for (const auto& ich : thelix.hits_) phiCcol[ich] = atan2f(chcol[ich].pos().y() - thelix.y_, chcol[ich].pos().x() - thelix.x_);
+       for (const auto& ich : thelix.hits_) phiCcol[ich] = polyAtan2(chcol[ich].pos().y() - thelix.y_, chcol[ich].pos().x() - thelix.x_);
        fillPhiZFitter(chcol,phiCcol,helix,zphiFitter);
        if (zphiFitter.isValid()) {
          float fa = zphiFitter.fa();
@@ -1269,7 +1271,7 @@ chi2dXY = bestHelix.dzdt_;
     }
     helix.r_ = sqrtf(radius/sumWeights);
 
-    for (auto ich : helix.hits_) phiCcol[ich] = atan2f(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
+    for (auto ich : helix.hits_) phiCcol[ich] = polyAtan2(chcol[ich].pos().y() - helix.y_, chcol[ich].pos().x() - helix.x_);
     fillPhiZFitter(chcol,phiCcol,helix,zphiFitter);
     helix.dpdz_ = zphiFitter.fa();
     helix.phi0_ = zphiFitter.fb();
