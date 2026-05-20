@@ -238,15 +238,14 @@ namespace mu2e {
 
 
       //flag duplicated sequences so that we don't save them
-      if (!reqphi_)
-        flagDuplicates(chcol,timeCandidates,phiCandidates);
+      if (!reqphi_) flagDuplicates(chcol,timeCandidates,phiCandidates);
 
 
       // Finally create the timeClusters
       tccol.reserve(64);
-      if (!reqphi_)
-        fillTCcol(timeCandidates,chcol,tccol);
-      fillTCcol(phiCandidates,chcol,tccol);
+      if (reqphi_) fillTCcol(phiCandidates,chcol,tccol);
+      else         fillTCcol(timeCandidates,chcol,tccol);
+
 
       if (diag_) fillDiag(timeCandidates, chcol, tccol);
   }

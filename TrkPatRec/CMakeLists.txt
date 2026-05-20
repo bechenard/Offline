@@ -43,6 +43,16 @@ cet_build_plugin(RobustMultiHelixFinder art::module
       Offline::TrkReco
 )
 
+cet_build_plugin(TimeClusterDumper art::module
+    REG_SOURCE src/TimeClusterDumper_module.cc
+    LIBRARIES REG
+      Offline::TrkPatRec
+      Offline::GeneralUtilities
+      Offline::Mu2eUtilities
+      Offline::RecoDataProducts
+      Offline::TrkReco
+)
+
 cet_build_plugin(TimeAndPhiClusterFinder art::module
     REG_SOURCE src/TimeAndPhiClusterFinder_module.cc
     LIBRARIES REG

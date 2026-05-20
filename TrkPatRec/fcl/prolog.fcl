@@ -6,6 +6,7 @@
 #include "Offline/fcl/TrkCaloDt.fcl"
 BEGIN_PROLOG
 
+
 TrkPatRec : {
    TimeCalculator : {
       TrkToCaloTimeOffset : 0.0
@@ -17,10 +18,30 @@ TrkPatRec : {
    TrkFitBackground : ["Dead"]
 }
 
+
+TrkPatDiag : {
+  TCD : {
+      module_type            : TimeClusterDumper
+      TimeClusterCollection  : "TimeClusterFinderDe"
+      ComboHitCollection     : "flagPH"
+      MCCollection           : "compressDigiMCs"
+      HitSelectionBits       : ["EnergySelection","TimeSelection","RadiusSelection"]
+      HitBackgroundBits      : [ @sequence::TrkPatRec.PatRecBackground ]
+  }
+}
+
+TrkPatDiag : {
+   @table::TrkPatDiag
+   analyzers : {
+     TCD : { @table::TrkPatDiag.TCD }
+   }
+}
+
+
+
 TrkPatRec : { @table::TrkPatRec
    TimeClusterFinder : {
       module_type            : TimeClusterFinder
-
       ComboHitCollection     : "flagPH"
       CaloClusterCollection  : "CaloClusterMaker"
       ClusterMVA             : { MVAWeights : "Offline/TrkPatRec/data/TimeCluster.weights.xml" }
@@ -40,7 +61,7 @@ TrkPatRec : { @table::TrkPatRec
       MinAddHitMVA           : 0.2
       MaxdPhi                : 1.5
       Tmin                   : 0.0
-      Tmax                   : 100000.0
+      Tmax                   : 2000
       Tbin                   : 15.0
       AveragePitch           : 0.6
       Ymin                   : 5.0
@@ -52,18 +73,18 @@ TrkPatRec : { @table::TrkPatRec
 
    # time clustering is the 1st stage of track finding
    TimeAndPhiClusterFinder : {
-      module_type             : TimeAndPhiClusterFinder
+      module_type            : TimeAndPhiClusterFinder
       ComboHitCollection     : "flagPH"
       CaloClusterCollection  : "CaloClusterMaker"
       HitSelectionBits       : ["EnergySelection","TimeSelection","RadiusSelection"]
       HitBackgroundBits      : [ @sequence::TrkPatRec.PatRecBackground ]
       MVATime                : { MVAWeights : "Offline/TrkPatRec/data/TimePhiCluster.weights.xml" }
       TestFlag               : true
-      UseCaloCluster         : false
-      CaloClusterMinE        : 50.0
+      UseCaloCluster         : true
+      CaloClusterMinE        : 30.0
       CaloClusterWeight      : 10.0
       AlgoAssignHits         : 1
-      MinNSHits              : 10
+      MinNSHits              : 15
       Tbin                   : 15.0
       MinTimeYbin            : 6
       MaxTimeDT              : 35.0
@@ -71,7 +92,7 @@ TrkPatRec : { @table::TrkPatRec
       MinHitSelect           : 50
       MinCutMVA              : 0.1
       SplitPhi               : true
-      RequirePhi             : false
+      RequirePhi             : true
       MaxDeltaPhi            : 0.3
       MaxNdiff               : 1
       Diag                   : 0
@@ -86,7 +107,7 @@ TrkPatRec : { @table::TrkPatRec
    RobustMultiHelixFinder : {
       module_type   : RobustMultiHelixFinder
       ComboHitCollection      : "flagPH"
-      TimeClusterCollection   : "TimeClusterFinderDe"
+      TimeClusterCollection   : "TimeClusterFinder"
       Helicities              : [-1,1]
       MinDRCircle             : 40
       MinRadCircle            : 150
@@ -109,7 +130,7 @@ TrkPatRec : { @table::TrkPatRec
       FitCircleStrategy       : "ChiSquared"
       MinStrawHits            : 10
       NMaxTrkIter             : 3
-      DiagLevel               : 0
+      DiagLevel               : 1
 
       DiagPlugin : {
          tool_type             : "RobustMultiHelixFinderDiag"
@@ -122,12 +143,12 @@ TrkPatRec : { @table::TrkPatRec
    }
 
    RobustMultiHelixFinder2 : {
-      module_type             : RobustMultiHelixFinder3
+      module_type             : RobustMultiHelixFinder
       ComboHitCollection      : "flagPH"
-      TimeClusterCollection   : "TimeClusterFinderDe"
+      TimeClusterCollection   : "TimeClusterFinder"
       CaloClusterCollection   : "CaloClusterMaker"
       Helicities              : [-1,1]
-      MaxEdepHit              : 0.0035
+      MaxEdepHit              : 10.0035
       MinHitStride            : 30
       MinRadCircle            : 150
       MaxRadCircle            : 350
@@ -135,7 +156,6 @@ TrkPatRec : { @table::TrkPatRec
       MinDXY2Circle           : 1000
       MaxDXY2Circle           : 1.6e6
       MaxDRCircle             : 30
-      MaxChi2Circle           : 1.5
       ResCRad                 : 0.02
       ResCPerp                : 0.2
       MaxDphi                 : 0.5
@@ -144,19 +164,19 @@ TrkPatRec : { @table::TrkPatRec
       MaxDZGap                : 1500
       SelHitRatio             : 0.7
       MinDpdz                 : 0.002
-      MaxDpdz                 : 0.007
+      MaxDpdz                 : 0.03
       MaxChi2Filter           : 1.5
-      MaxChi2Recover          : 2.0
+      MaxChi2Recover          : 3.0
       MinStrawHits            : 15
-      MinnTotHits             : 25
-      CaloClusterMinE         : 10
-      CaloClusterWeight       : 10
+      MinnTotHits             : 20
+      CaloClusterMinE         : 30
+      CaloClusterWeight       : 5
       CaloClustermaxDT        : 30
-      CaloClusterXYerr        : 10
-      CaloClusterChi2         : 5
-      MaxEDepAvg              : 0.0035
+      CaloClusterXYerr        : 50
+      CaloClusterChi2         : 3
+      CaloClusterRmin         : 380
       NMaxTrkIter             : 3
-      DiagLevel               : 0
+      DiagLevel               : 1
 
       DiagPlugin : {
          tool_type             : "RobustMultiHelixFinderDiag"
@@ -278,7 +298,7 @@ TrkPatRec : { @table::TrkPatRec
 # TPR
    RobustHelixFinderDe : {
       @table::TrkPatRec.RobustHelixFinder
-      TimeClusterCollection  : "TZClusterFinder"
+      TimeClusterCollection  : "TimeClusterFinderDe"
    }
    RobustHelixFinderUe : {
       @table::TrkPatRec.RobustHelixFinder
@@ -331,6 +351,7 @@ TrkPatRec : { @table::TrkPatRec
 TrkPatRec : { @table::TrkPatRec
    producers : {
 # TPR
+      TimeAndPhiClusterFinder   : { @table::TrkPatRec.TimeAndPhiClusterFinder}
       TimeClusterFinderDe   : { @table::TrkPatRec.TimeClusterFinderDe}
       TimeClusterFinderDmu  : { @table::TrkPatRec.TimeClusterFinderDmu}
       TimeClusterFinderDpi  : { @table::TrkPatRec.TimeClusterFinderDpi}
