@@ -1840,6 +1840,16 @@ namespace mu2e {
       poly->AddMaterial(met, 1.);
     }
 
+    // HumanTissue
+    mat = uniqueMaterialOrThrow("TissueEquivalent");
+    {
+      G4Material* tissue = new G4Material(mat.name, 1.0*CLHEP::g/CLHEP::cm3, 4);
+      tissue->AddMaterial(findMaterialOrThrow("G4_H"),10.1*CLHEP::perCent);
+      tissue->AddMaterial(findMaterialOrThrow("G4_C"),11.1*CLHEP::perCent);
+      tissue->AddMaterial(findMaterialOrThrow("G4_N"), 2.6*CLHEP::perCent);
+      tissue->AddMaterial(findMaterialOrThrow("G4_O"),76.2*CLHEP::perCent);
+    }
+
     // Add new materials before this line
 
   }

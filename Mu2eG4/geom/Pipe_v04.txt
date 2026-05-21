@@ -3,7 +3,7 @@
 // See Mu2e docdb #4678 for more details on parameters
 
 // Sort boxes into "types"
-int Pipe.numberOfPipeTypes = 7; // RHR diffusion pump added as a separate type
+int Pipe.numberOfPipeTypes = 8; // RHR diffusion pump added as a separate type
 int Pipe.version           = 2;
 
 // How many of each type pipe to make, and how many components in each.
@@ -21,6 +21,8 @@ int Pipe.nPipeType6 = 1; // Simple model of air handling duct in Remote Handling
 int Pipe.nComponentsInType6 = 1;
 int Pipe.nPipeType7 = 1; // RHR diffusion pump
 int Pipe.nComponentsInType7 = 1;
+int Pipe.nPipeType8 = 1; // Phantom
+int Pipe.nComponentsInType8 = 1;
 
 
 // Lengths in w dimension for each type of pipe.  Dimensions should be in mm.
@@ -60,6 +62,9 @@ double Pipe.lengthType5Pipe4 = 1000.0;
 double Pipe.lengthType6Pipe1 = 4000.0;  // Simplistic model
 double Pipe.lengthType7Pipe1 = 2200.0;
 
+double Pipe.lengthType8Pipe1 = 2000.0; // two meter tall phantom
+
+
 // Flavor of the type.  Here, flavor means "straight" (default) or "bend".
 string Pipe.flavorType1 = "straight";
 string Pipe.flavorType2 = "bend";
@@ -68,6 +73,7 @@ string Pipe.flavorType4 = "straight";
 string Pipe.flavorType5 = "straight";
 string Pipe.flavorType6 = "straight";
 string Pipe.flavorType7 = "straight";
+string Pipe.flavorType8 = "straight";
 
 // Fill material of the type
 string Pipe.fillMaterialType1 = "G10Lite";
@@ -77,6 +83,7 @@ string Pipe.fillMaterialType4 = "PSVacuum";
 string Pipe.fillMaterialType5 = "Electronics";
 string Pipe.fillMaterialType6 = "G4_AIR";
 string Pipe.fillMaterialType7 = "DC704"; // pump oil
+string Pipe.fillMaterialType8 = "TissueEquivalent"; // dummy phantom
 
 // The position of the piece in Mu2e Offline coordinates
 // Pipes added from PS-TS_Shield.txt of g4beamline
@@ -132,6 +139,8 @@ vector<double> Pipe.centerType5Pipe4 = { -4900.0, -500.0, 17420.0 };
 vector<double> Pipe.centerType6Pipe1 = { 8550.0,    0.0, -4500.0};
 vector<double> Pipe.centerType7Pipe1 = { 8500.0, -825.0, -7642.4};
 
+vector<double> Pipe.centerType8Pipe1 = { 12000.0, -1300, -7000};
+
 // The orientation of the pipe.  See docdb xxxx for details.
 string Pipe.orientationType1Pipe1 = "100";
 string Pipe.orientationType1Pipe2 = "010";
@@ -184,6 +193,8 @@ string Pipe.orientationType5Pipe4 = "100";
 string Pipe.orientationType6Pipe1 = "000";
 string Pipe.orientationType7Pipe1 = "100";
 
+string Pipe.orientationType8Pipe1 = "100";
+
 // Now the component information
 
 // Radii in mm
@@ -220,6 +231,8 @@ double Pipe.rInType6Comp1 = 400.0;
 
 double Pipe.rInType7Comp1 = 369.0;
 
+double Pipe.rInType8Comp1 = 0.0;
+
 // next, outer radii
 double Pipe.rOutType1Comp1 = 127.0;
 double Pipe.rOutType1Comp2 = 103.19;
@@ -252,6 +265,8 @@ double Pipe.rOutType5Comp1 = 75.0;
 double Pipe.rOutType6Comp1 = 415.0;
 
 double Pipe.rOutType7Comp1 = 375.0;
+
+double Pipe.rOutType8Comp1 = 300.0;
 
 // Materials for each type of component pipe.
 string Pipe.materialType1Comp1   = "StainlessSteel";
@@ -286,6 +301,8 @@ string Pipe.materialType6Comp1 = "G4_Al";
 
 string Pipe.materialType7Comp1 = "StainlessSteel316L";
 
+string Pipe.materialType8Comp1 = "TissueEquivalent";
+
 // Now the offsets, defining the positions of the components relative
 // to the mother pipe
 double Pipe.uOffsetType1Comp1  = 0.0;
@@ -319,6 +336,7 @@ double Pipe.uOffsetType5Comp1 = 0.0;
 double Pipe.uOffsetType6Comp1 = 0.0;
 
 double Pipe.uOffsetType7Comp1 = 0.0;
+double Pipe.uOffsetType8Comp1 = 0.0;
 
 
 // in v
@@ -352,6 +370,7 @@ double Pipe.vOffsetType5Comp1 = 0.0;
 
 double Pipe.vOffsetType6Comp1 = 0.0;
 double Pipe.vOffsetType7Comp1 = 0.0;
+double Pipe.vOffsetType8Comp1 = 0.0;
 
 // Global stuff
 
