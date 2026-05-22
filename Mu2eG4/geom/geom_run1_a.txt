@@ -99,6 +99,7 @@ bool   vd.solid          = false;
 //---------------------------------------
 #include "Offline/Mu2eG4/geom/visualization_regions.txt"
 
+#include "Offline/Mu2eG4/geom/Scorer_v01.txt"
 
 // patch to change East DS hatch block height
 double building.dsArea.hatchblock.E.offsetFromFloorSurface.y = 6400.80;
