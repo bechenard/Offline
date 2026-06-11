@@ -51,7 +51,7 @@ namespace mu2e {
 
         int iSection  = cal_.crystal(hits_[0]->crystalID()).diskID();
         CLHEP::Hep3Vector cogMu2eFrame(sx/sw,sy/sw,sz/sw);
-        return cal_.geomUtil().mu2eToDiskFF(iSection,cogMu2eFrame);
+        return cal_.caloUtil().mu2eToDiskFF(iSection,cogMu2eFrame);
     }
 
     //-------------------------------------------------------------------------------------------------

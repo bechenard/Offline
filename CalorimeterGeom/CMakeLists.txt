@@ -1,6 +1,6 @@
 cet_make_library(
     SOURCE
-      src/CaloGeomUtil.cc
+      src/CaloUtil.cc
       src/DiskCalorimeter.cc
       src/Disk.cc
       src/SquareMapper.cc

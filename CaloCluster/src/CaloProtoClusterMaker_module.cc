@@ -26,6 +26,8 @@
 #include "Offline/GeometryService/inc/GeometryService.hh"
 #include "Offline/RecoDataProducts/inc/CaloHit.hh"
 #include "Offline/RecoDataProducts/inc/CaloProtoCluster.hh"
+#include "Offline/ProditionsService/inc/ProditionsHandle.hh"
+#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
 
 #include <iostream>
 #include <string>
@@ -80,7 +82,8 @@ namespace mu2e {
         double                               deltaTime_;
         int                                  diagLevel_;
 
-        void makeProtoClusters (CaloProtoClusterCollection&,CaloProtoClusterCollection&, const art::Handle<CaloHitCollection>&);
+        void makeProtoClusters (const Calorimeter& cal, CaloProtoClusterCollection&,CaloProtoClusterCollection&,
+                                const art::Handle<CaloHitCollection>&);
         void filterByTime      (CaloCrystalList&, const std::vector<double>&);
         void fillCluster       (CaloProtoClusterCollection&, const CaloCrystalList&,const art::Handle<CaloHitCollection>&);
         void dump              (const std::string&, const std::vector<CaloCrystalList>&, std::set<const CaloHit*>);
@@ -91,9 +94,12 @@ namespace mu2e {
   {
       art::Handle<CaloHitCollection> CaloHitsHandle = event.getHandle<CaloHitCollection>(caloCrystalToken_);
 
+      ProditionsHandle<Calorimeter> alignedCalH;
+      const Calorimeter& alignedCal = alignedCalH.get(event.id());
+
       auto caloProtoClustersMain  = std::make_unique<CaloProtoClusterCollection>();
       auto caloProtoClustersSplit = std::make_unique<CaloProtoClusterCollection>();
-      makeProtoClusters(*caloProtoClustersMain,*caloProtoClustersSplit,CaloHitsHandle);
+      makeProtoClusters(alignedCal,*caloProtoClustersMain,*caloProtoClustersSplit,CaloHitsHandle);
 
       event.put(std::move(caloProtoClustersMain),  "main");
       event.put(std::move(caloProtoClustersSplit), "split");
@@ -101,14 +107,13 @@ namespace mu2e {
 
 
   //----------------------------------------------------------------------------------------------------------
-  void CaloProtoClusterMaker::makeProtoClusters(CaloProtoClusterCollection& caloProtoClustersMain,
+  void CaloProtoClusterMaker::makeProtoClusters(const Calorimeter& cal,
+                                                CaloProtoClusterCollection& caloProtoClustersMain,
                                                 CaloProtoClusterCollection& caloProtoClustersSplit,
                                                 const art::Handle<CaloHitCollection> & CaloHitsHandle)
   {
-      const Calorimeter& cal = *(GeomHandle<Calorimeter>());
       const CaloHitCollection& CaloHits(*CaloHitsHandle);
       if (CaloHits.empty()) return;
-
 
       //declare and fill the hash map crystal_id -> list of CaloHits
       std::vector<CaloCrystalList> mainClusterList, splitClusterList, caloIdHitMap(cal.nCrystals());
@@ -258,11 +263,6 @@ namespace mu2e {
       for (auto& ptr :seedList) std::cout<<ptr<<" ";
       std::cout<<std::endl;
   }
-
-
-
-
-
 }
 
 DEFINE_ART_MODULE(mu2e::CaloProtoClusterMaker)

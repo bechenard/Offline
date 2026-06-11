@@ -405,10 +405,10 @@ namespace mu2e {
     _bz0ConvSq = _bz0Conv * _bz0Conv;
 
     // Offset for calo cluster z positions
-    double offset = _calorimeter->caloInfo().getDouble("diskCaseZLength");
-    offset += _calorimeter->caloInfo().getDouble("BPPipeZOffset");
-    offset += _calorimeter->caloInfo().getDouble("BPHoleZLength");
-    offset += _calorimeter->caloInfo().getDouble("FEEZLength");
+    double offset = _calorimeter->G4Info().getDouble("diskCaseZLength");
+    offset += _calorimeter->G4Info().getDouble("BPPipeZOffset");
+    offset += _calorimeter->G4Info().getDouble("BPHoleZLength");
+    offset += _calorimeter->G4Info().getDouble("FEEZLength");
     offset /= 2.0;
     _caloZOffset = offset;
   }
@@ -680,8 +680,8 @@ namespace mu2e {
       if (cl.isNonnull()) {
         cHit hit;
         hit.hitIndice = HitType::CALOCLUSTER;
-        CLHEP::Hep3Vector gpos = _calorimeter->geomUtil().diskToMu2e(cl->diskID(), cl->cog3Vector());
-        CLHEP::Hep3Vector tpos = _calorimeter->geomUtil().mu2eToTracker(gpos);
+        CLHEP::Hep3Vector gpos = _calorimeter->caloUtil().diskToMu2e(cl->diskID(), cl->cog3Vector());
+        CLHEP::Hep3Vector tpos = _calorimeter->caloUtil().mu2eToTracker(gpos);
         _caloPos.SetCoordinates(tpos.x(), tpos.y(), tpos.z() - _caloZOffset);
         hit.pos = _caloPos;
         _tcHits.push_back(hit);

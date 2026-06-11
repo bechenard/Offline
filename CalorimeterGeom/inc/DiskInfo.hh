@@ -4,8 +4,8 @@
 // Original author B. Echenard
 //
 
-#ifndef CalorimeterGeom_DiskGeomInfo_hh
-#define CalorimeterGeom_DiskGeomInfo_hh
+#ifndef CalorimeterGeom_DiskInfo_hh
+#define CalorimeterGeom_DiskInfo_hh
 
 #include "CLHEP/Vector/Rotation.h"
 #include "CLHEP/Vector/ThreeVector.h"
@@ -13,10 +13,10 @@
 
 namespace mu2e {
 
-    class DiskGeomInfo {
+    class DiskInfo {
 
        public:
-         DiskGeomInfo() :
+         DiskInfo() :
            size_                 (CLHEP::Hep3Vector(0,0,0)),
            origin_               (CLHEP::Hep3Vector(0,0,0)),
            originLocal_          (CLHEP::Hep3Vector(0,0,0)),
@@ -26,6 +26,7 @@ namespace mu2e {
            crystalDirection_     (CLHEP::Hep3Vector(0,0,0)),
            frontFaceCenter_      (CLHEP::Hep3Vector(0,0,0)),
            backFaceCenter_       (CLHEP::Hep3Vector(0,0,0)),
+           crystalZlength_       (0),
            innerEnvelope_        (0),
            outerEnvelope_        (0),
            FEBZOffset_           (0),
@@ -41,6 +42,7 @@ namespace mu2e {
          const CLHEP::Hep3Vector&  backFaceCenter()        const {return backFaceCenter_; }
          const CLHEP::HepRotation& rotation()              const {return rotation_;}
          const CLHEP::HepRotation& inverseRotation()       const {return inverseRotation_;}
+         double crystalZLength()                           const {return crystalZlength_;}
          double innerEnvelopeR()                           const {return innerEnvelope_;}
          double outerEnvelopeR()                           const {return outerEnvelope_;}
          double FEBZOffset()                               const {return FEBZOffset_;}
@@ -55,6 +57,7 @@ namespace mu2e {
          void frontFaceCenter      (const CLHEP::Hep3Vector& pos)  {frontFaceCenter_ = pos;}
          void backFaceCenter       (const CLHEP::Hep3Vector& pos)  {backFaceCenter_ = pos;}
          void rotation             (const CLHEP::HepRotation& rot) {rotation_ = rot; inverseRotation_ = rot.inverse();}
+         void crystalZlength       (double val)                    {crystalZlength_ = val;}
          void envelopeRad          (double rin, double rout)       {innerEnvelope_ = rin; outerEnvelope_ = rout;}
          void FEBZOffset           (double val)                    {FEBZOffset_ = val;}
          void FEBZLength           (double val)                    {FEBZLength_ = val;}
@@ -70,6 +73,7 @@ namespace mu2e {
          CLHEP::Hep3Vector    crystalDirection_;
          CLHEP::Hep3Vector    frontFaceCenter_;
          CLHEP::Hep3Vector    backFaceCenter_;
+         double               crystalZlength_;
          double               innerEnvelope_;
          double               outerEnvelope_;
          double               FEBZOffset_;

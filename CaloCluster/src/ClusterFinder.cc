@@ -33,7 +33,8 @@ namespace mu2e {
                  isVisited_[visitId] = true;
 
                  std::vector<int>  neighborsId = cal_->crystal(visitId).neighbors();
-                 if (addSecondRing_) neighborsId.insert(neighborsId.end(), cal_->nextNeighbors(visitId).begin(), cal_->nextNeighbors(visitId).end());
+                 const auto& nn = cal_->crystal(visitId).nextNeighbors();
+                 if (addSecondRing_) neighborsId.insert(neighborsId.end(), nn.begin(), nn.end());
 
                  for (auto& iId : neighborsId)
                  {

@@ -19,5 +19,10 @@ CalSimParams : {
     verbose : 0
     useDb : false
 }
+alignedCalorimeter : {
+    filenameDisk : "Offline/CaloConditions/data/disk_align.txt"
+    verbose      : 0
+    useDb        : false
+}
 
 END_PROLOG

@@ -134,7 +134,8 @@ namespace mu2e {
               isVisited[visitId]=true;
 
               auto neighborsId = cal.crystal(visitId).neighbors();
-              if (extendSearch_) std::copy(cal.nextNeighbors(visitId).begin(), cal.nextNeighbors(visitId).end(), std::back_inserter(neighborsId));
+              auto nn = cal.crystal(visitId).nextNeighbors();
+              if (extendSearch_) std::copy(nn.begin(), nn.end(), std::back_inserter(neighborsId));
 
               for (const auto& iId : neighborsId)
               {
