@@ -13,18 +13,25 @@ namespace mu2e {
   if (_config.verbose()) {
     std::cout << "CalCalibMaker::fromFcl making nominal CalCalib\n";
   }
-  CalCalibPar nominal(_config.ADC2MeV(), _config.timeoffset());
+  CalCalibPar nominalCsI( _config.ADC2MeVCsI(),  _config.timeoffset());
+  CalCalibPar nominalLyso(_config.ADC2MeVLyso(), _config.timeoffset());
 
   size_t nChan = CaloConst::_nChannel;
 
   if (_config.verbose()) {
     std::cout << "CalCalibMaker::fromFcl filling " << nChan << " channels\n";
     std::cout << "CalCalibMaker::fromFcl nominal " << fixed << setprecision(3)
-         << setw(10) << nominal.ADC2MeV() << setprecision(3) << setw(10)
-         << nominal.timeOffset() << setprecision(3) << setw(10) << "\n";
+         << setw(10) << nominalCsI.ADC2MeV() << setw(10) << nominalLyso.ADC2MeV()
+         << setprecision(3) << setw(10) << nominalCsI.timeOffset() << setw(10) << "\n";
   }
 
-  CalCalib::CalibVec cvec(nChan, nominal);
+  CalCalib::CalibVec cvec;
+  for (uint16_t ic=0;ic<nChan;++ic){
+    bool isCaphri = CaloSiPMId(ic).crystal().isCaphri();
+    if (isCaphri) cvec.emplace_back(nominalLyso);
+    else cvec.emplace_back(nominalCsI);
+  }
+
   auto ptr = std::make_shared<CalCalib>(cvec);
   return ptr;
 

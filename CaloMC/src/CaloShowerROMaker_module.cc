@@ -279,7 +279,6 @@ namespace mu2e {
 
               bool isCaphri = CrystalId(crystalID).isCaphri();
               float pePerMeV = isCaphri ? pePerMeVLyso_ : pePerMeVCsI_;
-
               // Generate individual PEs and their arrival times
               for (int i=0; i<nROs; ++i)
               {

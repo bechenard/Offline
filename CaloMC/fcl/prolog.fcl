@@ -83,7 +83,6 @@ CaloMC : { @table::CaloMC
       nBinsPeak               : 2
       bufferDigi              : 16
       readoutPEPerMeVCsI      : @local::readoutPEPerMeVCsI
-      readoutPEPerMeVLyso     : @local::readoutPEPerMeVLyso
       MeVToADC                : @local::MeVToADC
       diagLevel               : 0
    }
