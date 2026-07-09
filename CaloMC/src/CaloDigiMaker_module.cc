@@ -94,7 +94,7 @@ namespace mu2e {
             wfExtractor_       (config().bufferDigi(),config().nBinsPeak(),config().minPeakADC(),config().bufferDigi()),
             engine_            (createEngine(art::ServiceHandle<SeedService>()->getSeed())),
             addNoise_          (config().addNoise()),
-            noiseGenerator_    (config().noise_gen_conf(), engine_, 0),
+            noiseGenerator_    (config().noise_gen_conf(), engine_),
             addRandomNoise_    (config().addRandomNoise()),
             diagLevel_         (config().diagLevel())
          {
