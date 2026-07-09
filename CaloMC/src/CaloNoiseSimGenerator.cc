@@ -8,6 +8,7 @@
 #include "TH2.h"
 #include "TGraph.h"
 #include "TCanvas.h"
+#include "TDirectory.h"
 
 #include <algorithm>
 #include <string>
@@ -20,12 +21,9 @@
 
 namespace mu2e {
 
-   CaloNoiseSimGenerator::CaloNoiseSimGenerator(const Config& config, CLHEP::HepRandomEngine& engine, int iRO) :
-     iRO_           (iRO),
+   CaloNoiseSimGenerator::CaloNoiseSimGenerator(const Config& config, CLHEP::HepRandomEngine& engine) :
      waveform_      (config.noiseWFSize(),0.0),
      pedestal_      (0.0),
-     digiNoise_     (),
-     digiNoiseProb_ (),
      digiSampling_  (config.digiSampling()),
      noiseRinDark_  (config.rinNphotPerNs() + config.darkNphotPerNs()),
      noiseElec_     (config.elecNphotPerNs()),
@@ -35,31 +33,32 @@ namespace mu2e {
      randPoisson_   (engine),
      randGauss_     (engine),
      randFlat_      (engine),
-     nMaxFragment_  (config.nMaxFragment()),
      pulseShape_    (config.pulseFileName(),config.pulseHistName(),digiSampling_),
      diagLevel_     (config.diagLevel())
    {}
 
 
    //------------------------------------------------------------------------------------------------------------------
-   void CaloNoiseSimGenerator::initialize(const CaloWFExtractor& wfExtractor)
+   void CaloNoiseSimGenerator::initialize()
    {
        pulseShape_.buildShapes();
-       generateWF(waveform_);
-       generateFragments(wfExtractor);
+       generateWF();
    }
 
    //------------------------------------------------------------------------------------------------------------------
-   void CaloNoiseSimGenerator::generateWF(std::vector<double>& wfVector)
+   void CaloNoiseSimGenerator::refresh() {generateWF();}
+
+   //------------------------------------------------------------------------------------------------------------------
+   void CaloNoiseSimGenerator::generateWF()
    {
        float scaleFactor(MeVToADC_/pePerMeV_);
 
-       std::fill(wfVector.begin(),wfVector.end(),0);
+       std::fill(waveform_.begin(),waveform_.end(),0);
 
        const auto&      pulse         = pulseShape_.digitizedPulse(0.0);
        const unsigned   pulseSize     = pulse.size();
        const unsigned   bufferSize    = int(0.75*pulseSize);
-       const unsigned   noiseSize     = wfVector.size();
+       const unsigned   noiseSize     = waveform_.size();
        const double     totalTime     = (noiseSize+bufferSize)*digiSampling_;
        const int        noiseLevelPE  = int(totalTime*noiseRinDark_);
 
@@ -73,51 +72,16 @@ namespace mu2e {
            int i0 = int(t0/digiSampling_) - bufferSize;
            int l0 = (i0<0) ? -i0 : 0;
            int l1 = std::min(pulseSize,noiseSize-i0);
-           for (int l=l0;l<l1;++l) wfVector[i0+l] += wf[l]*scaleFactor;
+           for (int l=l0;l<l1;++l) waveform_[i0+l] += wf[l]*scaleFactor;
        }
 
        //add electronics noise
        double noiseADC = noiseElec_*digiSampling_*scaleFactor;
-       for (auto& val : wfVector) val += randGauss_.fire(0.0,noiseADC);
+       for (auto& val : waveform_) val += randGauss_.fire(0.0,noiseADC);
 
        //estimate pedestal for this waveform - set it to theoretical value for the time being
        pedestal_ = std::trunc(noiseRinDark_*digiSampling_*std::accumulate(pulse.begin(),pulse.end(),0.0)*scaleFactor);
    }
-
-   //------------------------------------------------------------------------------------------------------------------
-   void CaloNoiseSimGenerator::generateFragments(const CaloWFExtractor& wfExtractor)
-   {
-       constexpr unsigned enoughFragments(20);
-       unsigned nwf(0), nfound(0), length(255);
-       for (;nwf<nMaxFragment_;++nwf)
-       {
-          std::vector<double> temp(length,0.0);
-
-          std::vector<int> wf;
-          wf.reserve(temp.size());
-          for (const auto& val : temp) wf.emplace_back(val - pedestal_);
-
-          std::vector<size_t> starts, stops;
-          starts.reserve(16); stops.reserve(16);
-          wfExtractor.extract(wf,starts,stops);
-          if (starts.empty()) continue;
-
-          std::vector<double> fragment;
-          fragment.reserve(stops[0]-starts[0]);
-          std::copy(temp.begin()+starts[0], temp.begin()+stops[0]+1, std::back_inserter(fragment));
-          digiNoise_.push_back(fragment);
-
-          ++nfound;
-          if (nfound==enoughFragments) break;
-       }
-
-       digiNoiseProb_= float(nfound)/float(nwf)/float(length);
-   }
-
-   //------------------------------------------------------------------------------------------------------------------
-   void CaloNoiseSimGenerator::refresh() {generateWF(waveform_);}
-
-
 
    //------------------------------------------------------------------------------------------------------------------
    void CaloNoiseSimGenerator::addSampleNoise(std::vector<double>& wfVector, unsigned istart, unsigned ilength)
@@ -127,30 +91,7 @@ namespace mu2e {
 
        unsigned irandom = unsigned(randFlat_.fire(0.,waveform_.size()-ilength));
        for (unsigned i=0;i<ilength;++i) wfVector[istart+i] += waveform_[irandom+i];
-
    }
-
-
-   //------------------------------------------------------------------------------------------------------------------
-   void CaloNoiseSimGenerator::addSaltAndPepper(std::vector<double>& wfVector)
-   {
-       double muNoise = waveform_.size()*digiNoiseProb_;
-       int    nNoise  = randPoisson_(muNoise);
-       for (int in=0;in<nNoise;++in)
-       {
-           unsigned idigi = unsigned(randFlat_.fire(0.,digiNoise_.size()));
-           const std::vector<double>& digi = digiNoise_[idigi];
-           if (wfVector.size() < digi.size()) continue;
-
-           unsigned istart = unsigned(randFlat_.fire(0.,wfVector.size()-digi.size()));
-           for (unsigned i=0;i<digi.size();++i)
-           {
-                if (wfVector[istart+i] < minPeakADC_) wfVector[istart+i] += digi[i];
-           }
-       }
-   }
-
-
 
 
    //------------------------------------------------------------------------------------------------------------------
@@ -171,6 +112,19 @@ namespace mu2e {
        c1.cd(2);
        h1.Draw();
        c1.SaveAs(name.c_str());
+   }
+
+   //------------------------------------------------------------------------------------------------------------------
+   void CaloNoiseSimGenerator::dumpNoise(const std::string& fname)
+   {
+      TFile outfile(fname.c_str(), "RECREATE");
+
+      TH1F h("histo_0","histo_0", waveform_.size(), 0, waveform_.size());
+      for (size_t i = 0; i < waveform_.size(); ++i) h.SetBinContent(i+1, waveform_[i]);
+
+      h.Write();
+      outfile.Close();
+      std::cout<<"CaloNoiseSimGenerator written waveform in "<<fname<<"\n";
    }
 
 }

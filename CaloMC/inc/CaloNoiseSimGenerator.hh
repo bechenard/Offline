@@ -8,7 +8,6 @@
 #include "art/Framework/Services/Optional/RandomNumberGenerator.h"
 #include "Offline/SeedService/inc/SeedService.hh"
 
-#include "Offline/CaloMC/inc/CaloWFExtractor.hh"
 #include "Offline/Mu2eUtilities/inc/CaloPulseShape.hh"
 
 #include "CLHEP/Random/RandPoissonQ.h"
@@ -34,36 +33,28 @@ namespace mu2e {
             fhicl::Atom<double>      pePerMeV       { Name("readoutPEPerMeV"),Comment("Number of pe / MeV for Readout") };
             fhicl::Atom<double>      MeVToADC       { Name("MeVToADC"),       Comment("MeV to ADC conversion factor") };
             fhicl::Atom<unsigned>    noiseWFSize    { Name("noiseWFSize"),    Comment("Noise WF size") };
-            fhicl::Atom<unsigned>    nMaxFragment   { Name("nMaxFragment"),   Comment("maximum number of wf generated for extracting noise fragments ") };
             fhicl::Atom<int>         minPeakADC     { Name("minPeakADC"),     Comment("Minimum ADC hits of local peak to digitize") };
             fhicl::Atom<int>         diagLevel      { Name("diagLevel"),      Comment("Diag Level"),0 };
         };
 
 
-        CaloNoiseSimGenerator(const Config& config, CLHEP::HepRandomEngine& engine, int iRO);
+        CaloNoiseSimGenerator(const Config& config, CLHEP::HepRandomEngine& engine);
 
-        void                         initialize(const CaloWFExtractor& wfExtractor);
+        void                         initialize();
         void                         refresh();
-
         void                         addSampleNoise(std::vector<double>& wfVector, unsigned istart, unsigned ilength);
-        void                         addSaltAndPepper(std::vector<double>& wfVector);
         void                         plotNoise(const std::string& name);
+        void                         dumpNoise(const std::string& name);
 
         const std::vector<double>&   noise()    const {return waveform_;}
         double                       pedestal() const {return pedestal_;}
 
 
      private:
-        using vvd = std::vector<std::vector<double>>;
+        void                  generateWF();
 
-        void                  generateWF(std::vector<double>& wfVector);
-        void                  generateFragments(const CaloWFExtractor& wfExtractor);
-
-        unsigned              iRO_;
         std::vector<double>   waveform_;
         int                   pedestal_;
-        vvd                   digiNoise_;
-        double                digiNoiseProb_;
         double                digiSampling_;
         double                noiseRinDark_;
         double                noiseElec_;
@@ -73,7 +64,6 @@ namespace mu2e {
         CLHEP::RandPoissonQ   randPoisson_;
         CLHEP::RandGaussQ     randGauss_;
         CLHEP::RandFlat       randFlat_;
-        unsigned              nMaxFragment_;
         CaloPulseShape        pulseShape_;
         int                   diagLevel_;
    };

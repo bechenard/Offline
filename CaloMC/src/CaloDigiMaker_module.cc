@@ -150,7 +150,7 @@ namespace mu2e {
   void CaloDigiMaker::beginRun(art::Run& aRun)
   {
       pulseShape_.buildShapes();
-      if (addNoise_) noiseGenerator_.initialize(wfExtractor_);
+      if (addNoise_) noiseGenerator_.initialize();
   }
 
 
@@ -214,7 +214,6 @@ namespace mu2e {
           // if we add random noise, then we need to scan all waveforms. Otherwise we can skip empty waveforms
           if (addRandomNoise_) {
             if (!isEmpty) generateSpotNoise(waveform);
-            noiseGenerator_.addSaltAndPepper(waveform);
             buildOutputDigi(iRO, waveform, noiseGenerator_.pedestal(), caloDigiColl);
           }
           else
