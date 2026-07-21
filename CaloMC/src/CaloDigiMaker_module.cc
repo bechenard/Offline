@@ -15,7 +15,7 @@
 
 #include "Offline/Mu2eUtilities/inc/CaloPulseShape.hh"
 #include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
-#include "Offline/CaloMC/inc/CaloNoiseSimGenerator.hh"
+#include "Offline/CaloMC/inc/CaloNoiseGenerator.hh"
 #include "Offline/CaloMC/inc/CaloWFExtractor.hh"
 #include "Offline/ProditionsService/inc/ProditionsHandle.hh"
 #include "Offline/DAQConditions/inc/EventTiming.hh"
@@ -54,7 +54,7 @@ namespace mu2e {
          {
              using Name    = fhicl::Name;
              using Comment = fhicl::Comment;
-             using CNG     = mu2e::CaloNoiseSimGenerator::Config;
+             using CNG     = mu2e::CaloNoiseGenerator::Config;
              fhicl::Table<CNG>          noise_gen_conf       { Name("NoiseGenerator"),         Comment("Noise generator config") };
              fhicl::Atom<art::InputTag> caloShowerCollection { Name("caloShowerROCollection"), Comment("CaloShowerRO collection name") };
              fhicl::Atom<art::InputTag> ewMarkerTag          { Name("eventWindowMarker"),      Comment("EventWindowMarker producer") };
@@ -94,7 +94,7 @@ namespace mu2e {
             wfExtractor_       (config().bufferDigi(),config().nBinsPeak(),config().minPeakADC(),config().bufferDigi()),
             engine_            (createEngine(art::ServiceHandle<SeedService>()->getSeed())),
             addNoise_          (config().addNoise()),
-            noiseGenerator_    (config().noise_gen_conf(), engine_),
+            noiseSampler_    (config().noise_gen_conf(), engine_),
             addRandomNoise_    (config().addRandomNoise()),
             diagLevel_         (config().diagLevel())
          {
@@ -139,7 +139,7 @@ namespace mu2e {
        CaloWFExtractor         wfExtractor_;
        CLHEP::HepRandomEngine& engine_;
        bool                    addNoise_;
-       CaloNoiseSimGenerator   noiseGenerator_;
+       CaloNoiseGenerator        noiseSampler_;
        bool                    addRandomNoise_;
        const Calorimeter*      calorimeter_;
        int                     diagLevel_;
@@ -150,7 +150,8 @@ namespace mu2e {
   void CaloDigiMaker::beginRun(art::Run& aRun)
   {
       pulseShape_.buildShapes();
-      if (addNoise_) noiseGenerator_.initialize();
+      //if (addNoise_) noiseSampler_.initialize();
+      //if (addNoise_) noiseSampler_.dumpNoise("noise_0.root");
   }
 
 
@@ -214,13 +215,13 @@ namespace mu2e {
           // if we add random noise, then we need to scan all waveforms. Otherwise we can skip empty waveforms
           if (addRandomNoise_) {
             if (!isEmpty) generateSpotNoise(waveform);
-            buildOutputDigi(iRO, waveform, noiseGenerator_.pedestal(), caloDigiColl);
+            buildOutputDigi(iRO, waveform, noiseSampler_.pedestal(), caloDigiColl);
           }
           else
           {
             if (isEmpty) continue;
             if (addNoise_) generateSpotNoise(waveform);
-            buildOutputDigi(iRO, waveform, noiseGenerator_.pedestal(), caloDigiColl);
+            buildOutputDigi(iRO, waveform, noiseSampler_.pedestal(), caloDigiColl);
           }
      }
   }
@@ -295,7 +296,10 @@ namespace mu2e {
        //Now take a random part of the noise waveform and add it to the waveform content
        for (size_t ihit=0; ihit<hitStarts.size(); ++ihit)
        {
-          noiseGenerator_.addSampleNoise(waveform,hitStarts[ihit],hitStops[ihit]-hitStarts[ihit]);
+          unsigned istart  = hitStarts[ihit];
+          unsigned ilength = hitStops[ihit]-hitStarts[ihit];
+          const auto& noiseWF = noiseSampler_.noiseSegment(0,istart,ilength);
+          for (unsigned i=0;i<ilength;++i) waveform[istart+i] += noiseWF[i];
        }
   }
 
