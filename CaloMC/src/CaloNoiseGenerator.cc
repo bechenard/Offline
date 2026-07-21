@@ -95,20 +95,18 @@ namespace mu2e {
        // Cache is for all baseID, clear it
        noiseMap_.clear();
        histoBaseID_ = histoBaseID;
-
-
-       float scaleFactor(MeVToADC_/pePerMeV_);
-
        constexpr unsigned noiseSize{10000};
        std::vector<float> waveform(noiseSize,0.0);
 
+       float scaleFactor(MeVToADC_/pePerMeV_);
+
+       pulseShape_.buildShapes();
        const auto&        pulse         = pulseShape_.digitizedPulse(0.0);
        const unsigned     pulseSize     = pulse.size();
        const unsigned     bufferSize    = int(0.75*pulseSize);
        const double       totalTime     = (noiseSize+bufferSize)*digiSampling_;
        const int          noiseLevelPE  = int(totalTime*noiseRinDark_);
 
-       pulseShape_.buildShapes();
 
        //Generate the radiation induced noise (RIN)
        const int nPh = randPoisson_(noiseLevelPE);

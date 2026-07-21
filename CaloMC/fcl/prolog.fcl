@@ -12,8 +12,8 @@ CaloMC : {
    #See doc-db 35519 for noise level discussion
    NoiseGenerator :
    {
-      generate                : true
-      dumpGenerated           : true
+      generate                : false
+      dumpGenerated           : false
       histoFileName           : "Offline/CaloMC/data/ReadoutNoise.root"
       histoPrefix             : "histo_"
       pulseFileName           : @local::pulseFileName
