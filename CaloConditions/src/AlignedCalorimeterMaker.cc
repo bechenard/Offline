@@ -45,9 +45,6 @@ namespace mu2e {
 
       diskcc.moveCrystal(crystal->localID(),shift);
     }
-
-
-
   }
 
 
