@@ -17,33 +17,36 @@
 #include "CLHEP/Vector/Rotation.h"
 #include <vector>
 #include <memory>
+#include <iostream>
+#include <string>
 
 namespace mu2e {
 
   class Disk {
     public:
-        Disk(int id, double rCrystalIn, double rCrystalOut, double nominalCellSize,
-             double nominalCellLength, int offset, const CLHEP::Hep3Vector& diskOriginToCrystalOrigin,
+        Disk(unsigned id, double rCrystalIn, double rCrystalOut,
+             double nominalCellSize, double nominalCellLength, unsigned offset,
+             const CLHEP::Hep3Vector& diskOriginToCrystalOrigin,
              const std::string& crystalFileName);
 
-        int                             id()           const {return id_;}
+        unsigned                        id()                const {return id_;}
 
-        size_t                          nCrystals()    const {return crystals_.size();}
-        const Crystal&                  crystal(int i) const {return crystals_.at(i);}
-              Crystal&                  crystal(int i)       {return crystals_.at(i);}
-        int                             crystalOffset()const {return crystalOffset_;}
+        size_t                          nCrystals()         const {return crystals_.size();}
+        const Crystal&                  crystal(unsigned i) const {return crystals_.at(i);}
+              Crystal&                  crystal(unsigned i)       {return crystals_.at(i);}
+        unsigned                        crystalOffset()     const {return crystalOffset_;}
 
-        const DiskInfo&                 diskInfo()     const {return diskInfo_;}
-              DiskInfo&                 diskInfo()           {return diskInfo_;}
+        const DiskInfo&                 diskInfo()          const {return diskInfo_;}
+              DiskInfo&                 diskInfo()                {return diskInfo_;}
 
-        std::vector<int>                neighbors      (int crystalId, int level=1)   const;
-        std::vector<int>                idxFromRow     (int thisRow)                  const;
-        int                             idxFromPosition(const CLHEP::Hep3Vector& pos) const;
+        std::vector<unsigned>           neighbors      (unsigned localId, unsigned level=1) const;
+        std::vector<unsigned>           idxFromRow     (int thisRow)                  const;
+        unsigned                        idxFromPosition(const CLHEP::Hep3Vector& pos) const;
 
         bool                            isInsideDisk   (const CLHEP::Hep3Vector& pos) const;
         bool                            isInsideCrystal(const CLHEP::Hep3Vector& pos) const;
 
-        void                            moveCrystal    (int id, const CLHEP::Hep3Vector& disp);
+        void                            moveCrystal    (unsigned localId, const CLHEP::Hep3Vector& disp);
         void                            moveDisk       (const CLHEP::Hep3Vector& disp,
                                                         const CLHEP::HepRotation& rotation);
 
@@ -54,21 +57,21 @@ namespace mu2e {
     private:
         void                            fillCrystals      (const CLHEP::Hep3Vector&, double nominalCellLength,
                                                            const std::string& filename);
-        void                            checkPosition     (float xPos,float yPos,float xside,float ysize) const;
-        bool                            isInsideCrystal   (int icry, const CLHEP::Hep3Vector& pos)        const;
-        bool                            isCrystalIdxValid (int i)                                         const;
-        std::vector<int>                findLocalNeighbors(int crystalId, int level=1)                    const;
+        void                            checkPosition     (float xPos,float yPos,float xsize,float ysize,
+                                                           unsigned crystalID)                            const;
+        bool                            isInsideCrystal   (unsigned icry, const CLHEP::Hep3Vector& pos)   const;
+        bool                            isCrystalIdxValid (unsigned i)                                    const;
 
-        int                             id_;
+        unsigned                        id_;
         std::vector<Crystal>            crystals_;
         DiskInfo                        diskInfo_;
         double                          radiusInCrystal_;
         double                          radiusOutCrystal_;
         double                          nominalCellSize_;
-        int                             crystalOffset_;
+        unsigned                        crystalOffset_;
         std::shared_ptr<CrystalMapper>  crystalMap_;
-        std::vector<int>                mapToCrystal_;
-        std::vector<int>                crystalToMap_;
+        std::vector<unsigned>           mapToCrystal_;
+        std::vector<unsigned>           crystalToMap_;
   };
 }
 #endif

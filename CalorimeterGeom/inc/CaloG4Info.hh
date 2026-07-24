@@ -52,9 +52,9 @@ namespace mu2e {
       void set(const std::string& key, const std::string& value)         {dataString_.set(key,value);}
       void set(const std::string& key, const CLHEP::Hep3Vector& value)   {dataH3V_.set(key,value);}
 
-      const bool                 getBool   (const std::string& key) const {return dataBool_.get(key);}
-      const int                  getInt    (const std::string& key) const {return dataInt_.get(key);}
-      const double               getDouble (const std::string& key) const {return dataDouble_.get(key);}
+      bool                       getBool   (const std::string& key) const {return dataBool_.get(key);}
+      int                        getInt    (const std::string& key) const {return dataInt_.get(key);}
+      double                     getDouble (const std::string& key) const {return dataDouble_.get(key);}
       const std::vector<int>&    getVInt   (const std::string& key) const {return dataVInt_.get(key);}
       const std::vector<double>& getVDouble(const std::string& key) const {return dataVDouble_.get(key);}
       const std::string&         getString (const std::string& key) const {return dataString_.get(key);}

@@ -38,7 +38,7 @@ namespace mu2e {
     util_(*this)
   {
     rebuildCrystalPtrs();
-    util_.trackerCenter(std::move(rhs.util_.trackerCenter()));
+    util_.trackerCenter(rhs.util_.trackerCenter());
   }
 
   void DiskCalorimeter::rebuildCrystalPtrs()
@@ -51,33 +51,39 @@ namespace mu2e {
     }
   }
 
+  std::vector<unsigned> DiskCalorimeter::neighbors(unsigned globalId, unsigned level) const
+  {
+    const Crystal& c = crystal(globalId);
+    const Disk&    d = disk(c.diskID());
+    auto ids = d.neighbors(c.localID(), level);
+    for (auto& v : ids) v += d.crystalOffset();
+    return ids;
+  }
 
   bool DiskCalorimeter::isInsideAnyDisk(const CLHEP::Hep3Vector& pos) const
   {
-    for (const auto& disk : disks_){
+    for (const auto& disk : disks_) {
       CLHEP::Hep3Vector posInDisk = util_.mu2eToDisk(disk.id(),pos);
       if (disk.isInsideDisk(posInDisk)) return true;
     }
     return false;
   }
 
-
   bool DiskCalorimeter::isInsideAnyCrystal(const CLHEP::Hep3Vector& pos) const
   {
-    for (const auto& disk : disks_){
+    for (const auto& disk : disks_) {
       CLHEP::Hep3Vector posInDisk = util_.mu2eToDiskFF(disk.id(),pos);
       if (disk.isInsideCrystal(posInDisk)) return true;
     }
     return false;
   }
 
-
   bool DiskCalorimeter::isInsideSameDisk(const CLHEP::Hep3Vector& front,
                                          const CLHEP::Hep3Vector& back) const
   {
     for (const auto& disk : disks_) {
-      CLHEP::Hep3Vector frontInDisk = util_.mu2eToDiskFF(disk.id(),front);
-      CLHEP::Hep3Vector backInDisk  = util_.mu2eToDiskFF(disk.id(),back);
+      CLHEP::Hep3Vector frontInDisk = util_.mu2eToDisk(disk.id(),front);
+      CLHEP::Hep3Vector backInDisk  = util_.mu2eToDisk(disk.id(),back);
       if (disk.isInsideDisk(frontInDisk) && disk.isInsideDisk(backInDisk)) return true;
     }
     return false;

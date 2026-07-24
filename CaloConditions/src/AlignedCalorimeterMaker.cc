@@ -43,8 +43,11 @@ namespace mu2e {
       const auto& crystal_align = crystal_align_params.at(crystal->ID());
       CLHEP::Hep3Vector  shift(crystal_align.dx(),crystal_align.dy(),crystal_align.dz());
 
-      diskcc.moveCrystal(crystal->ID(),shift);
+      diskcc.moveCrystal(crystal->localID(),shift);
     }
+
+
+
   }
 
 

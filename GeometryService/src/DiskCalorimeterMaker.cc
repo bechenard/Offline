@@ -238,17 +238,16 @@ namespace mu2e {
                                 2.0*crystalHalfZLength, crystalOffset, diskOriginToCrystalOrigin,
                                 diskCrystalFile);
 
-           thisDisk.diskInfo().size(size);
-           thisDisk.diskInfo().originToCrystalOrigin(diskOriginToCrystalOrigin);
            thisDisk.diskInfo().originLocal(originLocal);
-           thisDisk.diskInfo().origin(caloOrigin + originLocal);
+           thisDisk.diskInfo().setPose(caloOrigin + originLocal, diskRotation);
            thisDisk.diskInfo().frontFaceCenter(frontFaceCenter);
            thisDisk.diskInfo().backFaceCenter(backFaceCenter);
-           thisDisk.diskInfo().rotation(diskRotation);
+           thisDisk.diskInfo().crystalDirection(CLHEP::Hep3Vector(0,0,1));
+           thisDisk.diskInfo().size(size);
+           thisDisk.diskInfo().originToCrystalOrigin(diskOriginToCrystalOrigin);
            thisDisk.diskInfo().FEBZOffset(crateToDiskDeltaZ);
            thisDisk.diskInfo().FEBZLength(FEBZLength);
            thisDisk.diskInfo().envelopeRad(dR1,dR2);
-           thisDisk.diskInfo().crystalDirection(CLHEP::Hep3Vector(0,0,1));
            thisDisk.diskInfo().crystalZlength(2.0*crystalHalfZLength);
 
            //fill the full Crystal List / diskId (direct access for performance optimization)

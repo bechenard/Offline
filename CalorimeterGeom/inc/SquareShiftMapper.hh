@@ -61,25 +61,25 @@ namespace mu2e {
     public:
       SquareShiftMapper();
 
-      int                    nCrystalMax    (int maxRing)                const override;
-      CLHEP::Hep2Vector      xyFromIndex    (int thisIndex)              const override;
-      int                    indexFromXY    (double x, double y)         const override;
-      int                    indexFromRowCol(int nRow, int nCol)         const override;
-      int                    rowFromIndex   (int thisIndex)              const override;
-      int                    colFromIndex   (int thisIndex)              const override;
-      int                    numNeighbors   (int level)                  const override;
-      std::vector<int>       neighbors      (int thisIndex, int level=1) const override;
-      const std::vector<double>& apexX() const override {return apexX_;}
-      const std::vector<double>& apexY() const override {return apexY_;}
+      unsigned                  nCrystalMax(unsigned maxRing) const override;
+      CLHEP::Hep2Vector         xyFromIndex(unsigned thisIndex) const override;
+      unsigned                  indexFromXY(double x, double y) const override;
+      unsigned                  indexFromRowCol(int row, int col) const override;
+      int                       rowFromIndex(unsigned thisIndex) const override;
+      int                       colFromIndex(unsigned thisIndex) const override;
+      unsigned                  numNeighbors(unsigned level) const override;
+      std::vector<unsigned>     neighbors(unsigned thisIndex,unsigned level) const override;
+      const std::vector<double>& apexX() const override { return apexX_; }
+      const std::vector<double>& apexY() const override { return apexY_; }
 
     private:
-      SquShiftLK lk(int index)               const;
-      int        index(const SquShiftLK& lk) const;
-      int        ring(const SquShiftLK& lk)  const;
+      SquShiftLK lk(unsigned index) const;
+      unsigned index(const SquShiftLK& lk) const;
+      unsigned ring(const SquShiftLK& lk) const;
 
       std::vector<SquShiftLK> step_;
-      std::vector<double>     apexX_;
-      std::vector<double>     apexY_;
+      std::vector<double> apexX_;
+      std::vector<double> apexY_;
   };
 }
 

@@ -2,122 +2,134 @@
 #include "CLHEP/Vector/TwoVector.h"
 #include "CLHEP/Vector/ThreeVector.h"
 
-// See include file for description of mapping scheme
+#include <cmath>
+#include <cstdlib>
 
 namespace mu2e {
 
-
   SquareMapper::SquareMapper() :
-     step_(),
-     apexX_({-0.5,0.5,0.5,-0.5,-0.5}),
-     apexY_({-0.5,-0.5,0.5,0.5,-0.5})
+    step_(),
+    apexX_({-0.5,0.5,0.5,-0.5,-0.5}),
+    apexY_({-0.5,-0.5,0.5,0.5,-0.5})
   {
-     step_.push_back( SquLK( 1, 0) );  //right
-     step_.push_back( SquLK( 0,-1) );  //down
-     step_.push_back( SquLK(-1, 0) );  //left
-     step_.push_back( SquLK( 0, 1) );  //up
+    step_.push_back({ 1, 0}); // right
+    step_.push_back({ 0,-1}); // down
+    step_.push_back({-1, 0}); // left
+    step_.push_back({ 0, 1}); // up
   }
 
   //--------------------------------------------------------------------------------
-  int SquareMapper::nCrystalMax(int maxRing) const {return (2*maxRing+1)*(2*maxRing+1);}
+  unsigned SquareMapper::nCrystalMax(unsigned maxRing) const
+  {
+    return (2u*maxRing+1u)*(2u*maxRing+1u);
+  }
 
   //--------------------------------------------------------------------------------
-  CLHEP::Hep2Vector SquareMapper::xyFromIndex(int thisIndex) const
+  CLHEP::Hep2Vector SquareMapper::xyFromIndex(unsigned thisIndex) const
   {
      SquLK thisLK = lk(thisIndex);
      return CLHEP::Hep2Vector(thisLK.l_,thisLK.k_);
   }
 
-  int SquareMapper::indexFromXY(double x0, double y0) const
+  //--------------------------------------------------------------------------------
+  unsigned SquareMapper::indexFromXY(double x0, double y0) const
   {
-     int l = int(std::abs(x0)+0.5);
-     int k = int(std::abs(y0)+0.5);
-     if (x0<0) l *= -1;
-     if (y0<0) k *= -1;
+    int l = int(std::abs(x0)+0.5);
+    int k = int(std::abs(y0)+0.5);
 
-     SquLK lk(l,k);
-     return index(lk);
+    if (x0 < 0) l = -l;
+    if (y0 < 0) k = -k;
+
+    return index({l,k});
   }
 
   //--------------------------------------------------------------------------------
-  int SquareMapper::indexFromRowCol(int nRow, int nCol) const
+  unsigned SquareMapper::indexFromRowCol(int row, int col) const
   {
-     SquLK lk(nCol,nRow);
-     return index(lk);
-  }
-
-  int SquareMapper::rowFromIndex(int thisIndex) const
-  {
-     SquLK thisLK = lk(thisIndex);
-     return thisLK.k_;
-  }
-
-  int SquareMapper::colFromIndex(int thisIndex) const
-  {
-     SquLK thisLK = lk(thisIndex);
-     return thisLK.l_;
+    return index({col,row});
   }
 
   //--------------------------------------------------------------------------------
-  std::vector<int> SquareMapper::neighbors(int thisIndex, int level)  const
+  int SquareMapper::rowFromIndex(unsigned thisIndex) const
   {
-     if (level<1) return std::vector<int>{};
-
-     std::vector<int> thisNeighbour;
-
-     SquLK init = lk(thisIndex);
-     SquLK lk(init.l_ - level, init.k_ + level);
-
-     for (size_t i=0;i<step_.size();++i) {
-       for (int iseg=0;iseg<2*level;++iseg) {
-         lk.add(step_[i]);
-         thisNeighbour.push_back( index(lk) );
-       }
-     }
-     return thisNeighbour;
+    return lk(thisIndex).k_;
   }
 
   //--------------------------------------------------------------------------------
-  SquLK SquareMapper::lk(int thisIndex) const
+  int SquareMapper::colFromIndex(unsigned thisIndex) const
   {
-     if (thisIndex==0) return SquLK(0,0);
-
-     int nRing = int(0.5*sqrt(thisIndex) + 0.5);
-
-     int nSeg  = (thisIndex - (2*nRing-1)*(2*nRing-1)) / (2*nRing);
-     int nPos  = (thisIndex - (2*nRing-1)*(2*nRing-1)) % (2*nRing);
-
-     if (nSeg==0) return SquLK( -nRing+nPos ,  nRing     );
-     if (nSeg==1) return SquLK( nRing       ,  nRing-nPos);
-     if (nSeg==2) return SquLK( nRing-nPos  , -nRing     );
-     return              SquLK(-nRing       , -nRing+nPos);
+    return lk(thisIndex).l_;
   }
 
   //--------------------------------------------------------------------------------
-  int SquareMapper::index(const SquLK &thisLK) const
+  std::vector<unsigned>
+  SquareMapper::neighbors(unsigned thisIndex, unsigned level) const
   {
-     if (thisLK.l_==0 && thisLK.k_==0) return 0;
+    if (!level)
+      return {};
 
-     int nRing = ring(thisLK);
-     int pos   = (2*nRing-1)*(2*nRing-1);
+    std::vector<unsigned> result;
+    result.reserve(numNeighbors(level));
 
-     //add position along segment
-     if ( thisLK.k_ ==  nRing && thisLK.l_ < nRing)   pos +=          nRing + thisLK.l_;
-     if ( thisLK.l_ ==  nRing && thisLK.k_ > -nRing)  pos += 2*nRing + nRing - thisLK.k_;
-     if ( thisLK.k_ == -nRing && thisLK.l_ > -nRing)  pos += 4*nRing + nRing - thisLK.l_;
-     if ( thisLK.l_ == -nRing && thisLK.k_ < nRing)   pos += 6*nRing + nRing + thisLK.k_;
-     return                                       pos;
+    auto current = lk(thisIndex);
+    current.l_ -= level;
+    current.k_ += level;
+
+    for (unsigned i=0; i<step_.size(); ++i) {
+      for (unsigned j=0; j<2u*level; ++j) {
+        current.add(step_[i]);
+        result.push_back(index(current));
+      }
+    }
+
+    return result;
   }
 
   //--------------------------------------------------------------------------------
-  int SquareMapper::ring(const SquLK &thisLK) const
+  SquLK SquareMapper::lk(unsigned thisIndex) const
   {
-     return std::max(std::abs(thisLK.l_),std::abs(thisLK.k_));
+    if (!thisIndex) return {0,0};
+
+    const unsigned nRing = unsigned(0.5*sqrt(double(thisIndex))+0.5);
+    const unsigned first = (2u*nRing-1u)*(2u*nRing-1u);
+    const unsigned nSeg = (thisIndex-first)/(2u*nRing);
+    const unsigned nPos = (thisIndex-first)%(2u*nRing);
+
+    const int r = int(nRing);
+    const int p = int(nPos);
+    if (nSeg==0) return {-r+p,  r};
+    if (nSeg==1) return { r,    r-p};
+    if (nSeg==2) return { r-p, -r};
+    return {-r,   -r+p};
   }
 
   //--------------------------------------------------------------------------------
-  int SquareMapper::numNeighbors(int level) const
+  unsigned SquareMapper::index(const SquLK& thisLK) const
   {
-     return 2*level*static_cast<int>(step_.size());
+    if (thisLK.l_==0 && thisLK.k_==0) return 0u;
+
+    unsigned nRing = ring(thisLK);
+    unsigned pos = (2u*nRing-1u)*(2u*nRing-1u);
+    int r = int(nRing);
+
+    // add position along segment
+    if (thisLK.k_ ==  r && thisLK.l_ <  r) pos += unsigned(r + thisLK.l_);
+    if (thisLK.l_ ==  r && thisLK.k_ > -r) pos += unsigned(3*r - thisLK.k_);
+    if (thisLK.k_ == -r && thisLK.l_ > -r) pos += unsigned(5*r - thisLK.l_);
+    if (thisLK.l_ == -r && thisLK.k_ <  r) pos += unsigned(7*r + thisLK.k_);
+    return pos;
   }
+
+  //--------------------------------------------------------------------------------
+  unsigned SquareMapper::ring(const SquLK& thisLK) const
+  {
+    return unsigned(std::max(std::abs(thisLK.l_), std::abs(thisLK.k_)));
+  }
+
+  //--------------------------------------------------------------------------------
+  unsigned SquareMapper::numNeighbors(unsigned level) const
+  {
+    return 2u*level*unsigned(step_.size());
+  }
+
 }

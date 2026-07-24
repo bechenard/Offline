@@ -5,7 +5,6 @@
 // Original author B. Echenard
 //
 #include "Offline/Mu2eInterfaces/inc/Detector.hh"
-#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
 #include "Offline/CalorimeterGeom/inc/CaloUtil.hh"
 #include "Offline/CalorimeterGeom/inc/CaloG4Info.hh"
 #include "Offline/CalorimeterGeom/inc/Disk.hh"
@@ -13,6 +12,7 @@
 
 #include "CLHEP/Vector/ThreeVector.h"
 #include <vector>
+#include <iostream>
 
 namespace mu2e {
 
@@ -28,22 +28,23 @@ namespace mu2e {
       //no constructor for this interface
       virtual ~Calorimeter() = default;
 
-      virtual size_t            nDisks()          const = 0;
-      virtual const Disk&       disk(size_t i)    const = 0;
-      virtual const Disks&      disks()           const = 0;
+      virtual size_t            nDisks()            const = 0;
+      virtual const Disk&       disk(unsigned i)    const = 0;
+      virtual const Disks&      disks()             const = 0;
 
-      virtual size_t            nCrystals()       const = 0;
-      virtual const Crystal&    crystal(size_t i) const = 0;
-      virtual const Crystals&   crystals()        const = 0;
+      virtual size_t            nCrystals()         const = 0;
+      virtual const Crystal&    crystal(unsigned i) const = 0;
+      virtual const Crystals&   crystals()          const = 0;
 
-      virtual const CaloG4Info& G4Info()          const = 0;
-      virtual const CaloUtil&   caloUtil()        const = 0;
+      virtual const CaloG4Info& G4Info()            const = 0;
+      virtual const CaloUtil&   caloUtil()          const = 0;
 
-      virtual bool              isInsideAnyCrystal(const Hep3Vector& pos)   const = 0;
-      virtual bool              isInsideAnyDisk   (const Hep3Vector& pos)   const = 0;
-      virtual bool              isInsideSameDisk  (const Hep3Vector& front,
-                                                   const Hep3Vector& back)  const = 0;
-      virtual void              print(std::ostream &os = std::cout)         const = 0;
+      virtual std::vector<unsigned> neighbors(unsigned globalId, unsigned level) const = 0;
+      virtual bool                  isInsideAnyCrystal(const Hep3Vector& pos)    const = 0;
+      virtual bool                  isInsideAnyDisk   (const Hep3Vector& pos)    const = 0;
+      virtual bool                  isInsideSameDisk  (const Hep3Vector& front,
+                                                       const Hep3Vector& back)   const = 0;
+      virtual void                  print(std::ostream &os = std::cout)          const = 0;
   };
 }
 #endif

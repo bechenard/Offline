@@ -28,15 +28,15 @@ namespace mu2e {
          void trackerCenter (const CLHEP::Hep3Vector& vec);
          const CLHEP::Hep3Vector& trackerCenter()  const;
 
-         CLHEP::Hep3Vector mu2eToCrystal(int crystalId, const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector mu2eToDisk   (int diskId,    const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector mu2eToDiskFF (int diskId,    const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector mu2eToTracker(const CLHEP::Hep3Vector& pos)                const;
+         CLHEP::Hep3Vector mu2eToCrystal(unsigned crystalId, const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector mu2eToDisk   (unsigned diskId,    const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector mu2eToDiskFF (unsigned diskId,    const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector mu2eToTracker(const CLHEP::Hep3Vector& pos)                     const;
 
-         CLHEP::Hep3Vector crystalToMu2e(int crystalId, const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector diskToMu2e   (int diskId,    const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector diskFFToMu2e (int diskId,    const CLHEP::Hep3Vector& pos) const;
-         CLHEP::Hep3Vector trackerToMu2e(const CLHEP::Hep3Vector& pos)                const;
+         CLHEP::Hep3Vector crystalToMu2e(unsigned crystalId, const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector diskToMu2e   (unsigned diskId,    const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector diskFFToMu2e (unsigned diskId,    const CLHEP::Hep3Vector& pos) const;
+         CLHEP::Hep3Vector trackerToMu2e(const CLHEP::Hep3Vector& pos)                     const;
 
 
        private:
